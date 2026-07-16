@@ -12,7 +12,7 @@ var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-moti
    To lock it again on a device, clear the site's browser data,
    or open the URL with a wrong/no ?edit= value in a private window.
 ============================================================ */
-var SECRET_KEY = "tomtom-rahasia-2026"; // <-- GANTI dengan kata rahasiamu sendiri
+var SECRET_KEY = "MNDAJOURNEY"; // <-- GANTI dengan kata rahasiamu sendiri
 (function ownerCheck() {
   var params = new URLSearchParams(window.location.search);
   var attempt = params.get("edit");

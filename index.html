@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Journey — TomTom</title>
+<meta name="description" content="Perjalanan hidup Muhammad Nabil Dzikri Ashoffat (TomTom), dari Purbalingga menuju Akuakultur UGM.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#060b13;
+  --deep:#0b1826;
+  --deep-2:#0f2233;
+  --card:#0e1e2c;
+  --card-line:rgba(148,187,203,0.14);
+  --aqua:#3fe0c5;
+  --aqua-dim:rgba(63,224,197,0.35);
+  --gold:#e8b94d;
+  --gold-dim:rgba(232,185,77,0.35);
+  --star:#eef3f5;
+  --muted:#8aa0b0;
+  --muted-2:#5c7284;
+  --font-display:'Fraunces', serif;
+  --font-body:'Plus Jakarta Sans', sans-serif;
+  --font-mono:'Space Mono', monospace;
+  --maxw:1080px;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto;}
+  *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+}
+
+body{
+  margin:0;
+  background:var(--void);
+  color:var(--star);
+  font-family:var(--font-body);
+  line-height:1.6;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+::selection{background:var(--aqua-dim); color:var(--star);}
+
+a{color:var(--aqua);}
+:focus-visible{outline:2px solid var(--aqua); outline-offset:3px; border-radius:4px;}
+
+/* ============ BACKGROUND CANVAS ============ */
+#bgCanvas{
+  position:fixed; inset:0; width:100%; height:100%;
+  z-index:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(63,224,197,0.10), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 20%, rgba(232,185,77,0.06), transparent 60%),
+    linear-gradient(180deg, #060b13 0%, #081420 35%, #0a1a28 70%, #071019 100%);
+}
+
+.grain{
+  position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0.035; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============ LAYOUT SHELL ============ */
+.wrap{position:relative; z-index:2;}
+.container{max-width:var(--maxw); margin:0 auto; padding:0 24px;}
+
+/* ============ TOP INFO BAR ============ */
+.infobar{
+  position:sticky; top:0; z-index:40;
+  background:rgba(6,11,19,0.85); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--card-line);
+  font-family:var(--font-mono); font-size:12.5px; color:var(--muted);
+  display:flex; align-items:center; justify-content:center; gap:14px;
+  padding:10px 16px; text-align:center;
+}
+.infobar button{
+  background:none; border:1px solid var(--card-line); color:var(--muted);
+  border-radius:20px; padding:3px 10px; font-family:var(--font-mono); font-size:11px; cursor:pointer;
+}
+.infobar button:hover{color:var(--aqua); border-color:var(--aqua-dim);}
+.infobar.hidden{display:none;}
+
+/* ============ HERO ============ */
+.hero{
+  min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:120px 24px 80px; position:relative;
+}
+.hero-eyebrow{
+  font-family:var(--font-mono); letter-spacing:0.35em; font-size:12px; color:var(--aqua);
+  text-transform:uppercase; margin-bottom:22px; opacity:0;
+  animation:fadeUp 1s ease forwards 0.1s;
+}
+.hero-name{
+  font-family:var(--font-display); font-weight:600; font-size:clamp(2.4rem, 7vw, 5.2rem);
+  line-height:1.05; margin:0; max-width:900px; opacity:0;
+  animation:fadeUp 1s ease forwards 0.3s;
+}
+.hero-nick{
+  display:inline-flex; align-items:center; gap:8px; margin-top:26px;
+  font-family:var(--font-mono); font-size:13px; color:var(--gold);
+  border:1px solid var(--gold-dim); padding:8px 18px; border-radius:30px;
+  opacity:0; animation:fadeUp 1s ease forwards 0.5s;
+}
+.hero-nick .dot{width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px var(--gold);}
+.hero-sub{
+  max-width:560px; margin-top:28px; color:var(--muted); font-size:16px;
+  opacity:0; animation:fadeUp 1s ease forwards 0.7s;
+}
+.hero-meta{
+  margin-top:20px; font-family:var(--font-mono); font-size:12px; color:var(--muted-2);
+  opacity:0; animation:fadeUp 1s ease forwards 0.85s;
+}
+.hero-scroll{
+  position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  color:var(--muted-2); font-family:var(--font-mono); font-size:10px; letter-spacing:0.2em;
+  opacity:0; animation:fadeUp 1s ease forwards 1.1s;
+}
+.hero-scroll .line{width:1px; height:36px; background:linear-gradient(var(--aqua), transparent); animation:scrollPulse 2s ease-in-out infinite;}
+
+@keyframes fadeUp{from{opacity:0; transform:translateY(18px);} to{opacity:1; transform:translateY(0);}}
+@keyframes scrollPulse{0%,100%{opacity:0.3;} 50%{opacity:1;}}
+
+/* ============ SECTION HEADERS ============ */
+.section{padding:90px 24px; position:relative;}
+.section-head{max-width:640px; margin:0 auto 56px; text-align:center;}
+.section-eyebrow{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:0.3em; text-transform:uppercase;
+  color:var(--aqua); margin-bottom:14px;
+}
+.section-title{
+  font-family:var(--font-display); font-weight:600; font-size:clamp(1.8rem, 4vw, 2.6rem);
+  margin:0 0 12px;
+}
+.section-desc{color:var(--muted); font-size:15px; max-width:520px; margin:0 auto;}
+
+/* ============ JOURNEY TRACK (signature element) ============ */
+.journey-track{position:relative; max-width:var(--maxw); margin:0 auto; padding:40px 24px 20px;}
+#trackSvgWrap{
+  position:absolute; left:50%; top:0; transform:translateX(-50%);
+  width:60px; height:100%; z-index:0; pointer-events:none;
+}
+#trackSvgWrap svg{display:block; width:100%; height:100%;}
+.bubble-field{position:absolute; left:50%; top:0; width:80px; height:100%; transform:translateX(-50%); z-index:0; pointer-events:none;}
+.bubble{
+  position:absolute; bottom:-20px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, rgba(63,224,197,0.55), rgba(63,224,197,0.05));
+  animation:riseUp linear infinite;
+}
+@keyframes riseUp{
+  0%{transform:translateY(0) translateX(0); opacity:0;}
+  10%{opacity:0.8;}
+  90%{opacity:0.5;}
+  100%{transform:translateY(-110vh) translateX(var(--drift,10px)); opacity:0;}
+}
+
+.chapter{
+  position:relative; z-index:2; display:grid; grid-template-columns:1fr 1fr;
+  gap:50px; align-items:center; padding:70px 0;
+}
+.chapter:nth-child(even) .chapter-text{order:2;}
+.chapter:nth-child(even) .chapter-media{order:1;}
+.chapter-node{
+  position:absolute; left:50%; top:70px; transform:translateX(-50%);
+  width:14px; height:14px; border-radius:50%; background:var(--deep-2);
+  border:2px solid var(--muted-2); z-index:3; transition:all 0.6s ease;
+}
+.chapter.inview .chapter-node{
+  border-color:var(--aqua); background:var(--aqua);
+  box-shadow:0 0 0 6px rgba(63,224,197,0.15), 0 0 18px var(--aqua);
+}
+.chapter-text{opacity:0; transform:translateY(24px); transition:opacity 0.8s ease, transform 0.8s ease;}
+.chapter-media{opacity:0; transform:translateY(24px); transition:opacity 0.8s ease 0.15s, transform 0.8s ease 0.15s;}
+.chapter.inview .chapter-text, .chapter.inview .chapter-media{opacity:1; transform:translateY(0);}
+
+.chapter-label{
+  font-family:var(--font-mono); font-size:12px; color:var(--gold); letter-spacing:0.05em;
+  margin-bottom:10px; display:block;
+}
+.chapter-title{
+  font-family:var(--font-display); font-weight:600; font-size:clamp(1.5rem, 3vw, 2.1rem);
+  margin:0 0 16px;
+}
+.chapter-story{color:var(--muted); font-size:15px; line-height:1.75;}
+.chapter-story[contenteditable="true"]{outline:1px dashed var(--aqua-dim); border-radius:6px; padding:6px; background:rgba(63,224,197,0.04);}
+
+.chip-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px;}
+.chip{
+  font-family:var(--font-mono); font-size:11px; color:var(--aqua);
+  border:1px solid var(--aqua-dim); padding:5px 12px; border-radius:20px;
+  background:rgba(63,224,197,0.06);
+}
+
+/* photo grid & upload slots */
+.photo-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;}
+.photo-slot{
+  position:relative; aspect-ratio:1/1; border-radius:14px; overflow:hidden;
+  border:1.5px dashed var(--card-line); background:var(--card);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  transition:border-color 0.25s ease, transform 0.25s ease;
+}
+.photo-slot:hover{border-color:var(--aqua-dim); transform:translateY(-2px);}
+.photo-slot img{width:100%; height:100%; object-fit:cover; display:block;}
+.photo-slot .ph-icon{color:var(--muted-2); font-size:22px; font-family:var(--font-mono);}
+.photo-slot .ph-label{
+  position:absolute; bottom:6px; left:6px; right:6px; font-family:var(--font-mono);
+  font-size:9px; color:var(--muted-2); text-align:center; pointer-events:none;
+}
+.photo-slot input[type=file]{display:none;}
+.photo-slot.has-img .ph-icon, .photo-slot.has-img .ph-label{display:none;}
+.photo-slot .remove-btn{
+  position:absolute; top:5px; right:5px; width:20px; height:20px; border-radius:50%;
+  background:rgba(6,11,19,0.75); color:var(--star); border:none; font-size:12px; cursor:pointer;
+  display:none; align-items:center; justify-content:center; z-index:2;
+}
+.photo-slot.has-img .remove-btn{display:flex;}
+
+.add-slot-btn{
+  margin-top:12px; font-family:var(--font-mono); font-size:11px; color:var(--muted);
+  background:none; border:1px solid var(--card-line); border-radius:20px; padding:6px 14px;
+  cursor:pointer; transition:all 0.2s ease;
+}
+.add-slot-btn:hover{color:var(--aqua); border-color:var(--aqua-dim);}
+
+/* ============ CARDS (org, prestasi, project) ============ */
+.grid-cards{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:18px; max-width:var(--maxw); margin:0 auto;
+}
+.card{
+  background:var(--card); border:1px solid var(--card-line); border-radius:18px; padding:26px;
+  transition:transform 0.3s ease, border-color 0.3s ease;
+}
+.card:hover{transform:translateY(-4px); border-color:var(--aqua-dim);}
+.card-icon{font-size:22px; margin-bottom:14px; display:block;}
+.card-title{font-family:var(--font-display); font-weight:600; font-size:17px; margin:0 0 8px;}
+.card-desc{color:var(--muted); font-size:13.5px; line-height:1.6;}
+.card-tag{font-family:var(--font-mono); font-size:10.5px; color:var(--gold); margin-bottom:8px; display:block; letter-spacing:0.04em;}
+
+/* project cards get mini photo row */
+.project-card .photo-grid{grid-template-columns:repeat(2,1fr); margin-top:16px;}
+.project-card .photo-slot{aspect-ratio:16/10;}
+
+/* ============ ABOUT / GOALS ============ */
+.about-grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; max-width:var(--maxw); margin:0 auto;
+}
+.about-item{background:var(--card); border:1px solid var(--card-line); border-radius:16px; padding:22px;}
+.about-item h4{
+  font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:0.15em;
+  color:var(--aqua); margin:0 0 10px;
+}
+.about-item p{margin:0; color:var(--star); font-size:14.5px; min-height:24px;}
+.about-item p[contenteditable="true"]{outline:1px dashed var(--aqua-dim); border-radius:6px; padding:4px;}
+.placeholder-text{color:var(--muted-2); font-style:italic;}
+
+.goal-list{max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:12px;}
+.goal-item{
+  display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--card-line);
+  border-radius:14px; padding:16px 20px; font-size:14.5px;
+}
+.goal-item .goal-dot{width:9px; height:9px; border-radius:50%; background:var(--gold); box-shadow:0 0 10px var(--gold-dim); flex-shrink:0;}
+
+/* ============ GALLERY ============ */
+.gallery-grid{
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; max-width:var(--maxw); margin:0 auto;
+}
+.gallery-grid .photo-slot{aspect-ratio:1/1; border-radius:12px;}
+
+/* ============ CONTACT / FOOTER ============ */
+.contact-grid{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:14px; max-width:640px; margin:0 auto;
+}
+.contact-pill{
+  display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--card-line);
+  border-radius:30px; padding:12px 20px; text-decoration:none; color:var(--star); font-size:13.5px;
+  transition:border-color 0.25s ease, transform 0.25s ease;
+}
+.contact-pill:hover{border-color:var(--aqua-dim); transform:translateY(-2px);}
+.contact-pill .cp-label{font-family:var(--font-mono); font-size:10px; color:var(--muted-2); display:block;}
+.contact-pill span[contenteditable="true"]{outline:1px dashed var(--aqua-dim); border-radius:4px;}
+
+footer{
+  text-align:center; padding:60px 24px 100px; color:var(--muted-2); font-family:var(--font-mono); font-size:12px;
+}
+
+/* ============ EDIT TOOLBAR ============ */
+.toolbar{
+  display:none;
+  position:fixed; bottom:22px; right:22px; z-index:50;
+  flex-direction:column; align-items:flex-end; gap:10px;
+}
+html.is-owner .toolbar{display:flex;}
+html.is-owner .infobar{display:flex;}
+html.is-owner .infobar.hidden{display:none;}
+.infobar{display:none;}
+.toolbar-panel{
+  display:none; flex-direction:column; gap:8px; background:var(--card); border:1px solid var(--card-line);
+  border-radius:14px; padding:12px; margin-bottom:4px; box-shadow:0 10px 40px rgba(0,0,0,0.4);
+}
+.toolbar-panel.open{display:flex;}
+.toolbar-panel button{
+  font-family:var(--font-mono); font-size:11.5px; color:var(--star); background:var(--deep-2);
+  border:1px solid var(--card-line); border-radius:8px; padding:9px 14px; cursor:pointer; text-align:left;
+  white-space:nowrap;
+}
+.toolbar-panel button:hover{border-color:var(--aqua-dim); color:var(--aqua);}
+.toolbar-main{
+  width:52px; height:52px; border-radius:50%; border:1px solid var(--aqua-dim);
+  background:var(--deep-2); color:var(--aqua); font-size:20px; cursor:pointer;
+  box-shadow:0 6px 24px rgba(63,224,197,0.15); display:flex; align-items:center; justify-content:center;
+}
+.toolbar-main.active{background:var(--aqua); color:var(--void);}
+body.edit-mode [data-editable]{cursor:text;}
+html:not(.is-owner) .photo-slot{cursor:default;}
+html:not(.is-owner) .photo-slot:hover{border-color:var(--card-line); transform:none;}
+html:not(.is-owner) .photo-slot .remove-btn{display:none !important;}
+body.edit-mode .photo-slot::after{
+  content:"✎"; position:absolute; top:5px; left:5px; font-size:11px; color:var(--aqua);
+  background:rgba(6,11,19,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; z-index:2;
+}
+.save-toast{
+  position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); z-index:60;
+  background:var(--aqua); color:var(--void); font-family:var(--font-mono); font-size:12px;
+  padding:9px 18px; border-radius:20px; opacity:0; pointer-events:none; transition:all 0.35s ease;
+}
+.save-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:820px){
+  .chapter{grid-template-columns:1fr; gap:28px; padding-left:26px;}
+  .chapter:nth-child(even) .chapter-text, .chapter:nth-child(even) .chapter-media{order:initial;}
+  .chapter-node{left:0; top:64px; transform:none;}
+  #trackSvgWrap, .bubble-field{left:0; transform:none; width:14px;}
+  .photo-grid{grid-template-columns:repeat(3,1fr);}
+  .gallery-grid{grid-template-columns:repeat(3,1fr);}
+}
+@media (max-width:520px){
+  .gallery-grid{grid-template-columns:repeat(2,1fr);}
+  .hero{padding-top:100px;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div class="grain"></div>
+
+<div class="wrap">
+
+  <div class="infobar" id="infobar">
+    <span>👋 Klik ikon pensil di pojok kanan bawah untuk edit teks &amp; unggah fotomu sendiri — tersimpan otomatis di browser ini.</span>
+    <button id="dismissInfo">Mengerti</button>
+  </div>
+
+  <!-- ================= HERO ================= -->
+  <header class="hero">
+    <div class="hero-eyebrow">My Journey</div>
+    <h1 class="hero-name">Muhammad Nabil<br>Dzikri Ashoffat</h1>
+    <div class="hero-nick"><span class="dot"></span> dipanggil TomTom</div>
+    <p class="hero-sub">Dari Purbalingga menuju Sleman, dari asrama pondok menuju laut ilmu Akuakultur UGM — ini catatan perjalanan hidupku, pelan-pelan mengalir seperti arus menuju muara.</p>
+    <div class="hero-meta">23 NOVEMBER 2007 · PURBALINGGA, JAWA TENGAH</div>
+    <div class="hero-scroll"><span>SCROLL</span><span class="line"></span></div>
+  </header>
+
+  <!-- ================= JOURNEY TRACK ================= -->
+  <section class="journey-track" id="journeyTrack">
+    <div id="trackSvgWrap"></div>
+    <div class="bubble-field" id="bubbleField"></div>
+
+    <!-- Chapter 0 -->
+    <article class="chapter" data-chapter>
+      <div class="chapter-node"></div>
+      <div class="chapter-text">
+        <span class="chapter-label">2012 — 2014 · TK Istiqomah Sambas</span>
+        <h2 class="chapter-title">Langkah Pertama</h2>
+        <p class="chapter-story" contenteditable="false" data-key="story-0">Sebelum semuanya dimulai, sempat merasakan sekolah singkat di balai desa sendiri. Tak lama, pindah ke TK/PAUD Istiqomah Sambas, Purbalingga — tempat pertama kali belajar duduk di kelas sungguhan. Masuk TK A tahun 2012, dan lulus TK B pada pertengahan 2014.</p>
+        <div class="chip-row"><span class="chip">Sekolah pertama</span><span class="chip">Purbalingga</span></div>
+      </div>
+      <div class="chapter-media">
+        <div class="photo-grid" data-group="ch0">
+          <div class="photo-slot" data-slot="ch0-1"><span class="ph-icon">+</span><span class="ph-label">Foto TK</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+          <div class="photo-slot" data-slot="ch0-2"><span class="ph-icon">+</span><span class="ph-label">Foto TK</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+          <div class="photo-slot" data-slot="ch0-3"><span class="ph-icon">+</span><span class="ph-label">Foto Bayi</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+        </div>
+        <button class="add-slot-btn" data-add="ch0">+ tambah foto</button>
+      </div>
+    </article>
+
+    <!-- Chapter 1 -->
+    <article class="chapter" data-chapter>
+      <div class="chapter-node"></div>
+      <div class="chapter-text">
+        <span class="chapter-label">2014 — 2020 · SD Istiqomah Sambas Purbalingga</span>
+        <h2 class="chapter-title">Angkatan Takhossus</h2>
+        <p class="chapter-story" contenteditable="false" data-key="story-1">Masuk ke kelas takhossus — satu-satunya kelas yang isinya sama selama 6 tahun penuh tanpa pernah ganti teman. Awalnya 32 anak (12 laki-laki, 20 perempuan), lalu jadi 10 anak laki-laki yang solid banget sejak kelas 3. Kelas paling sering juara lomba tarik tambang, aktif ikut lomba roket air, dan pernah ikut seleksi OSN Matematika. Sempat menghafal Juz 30, 29, dan 28. Angkatan ke-7, dan jadi generasi corona pertama yang tidak merasakan Ujian Nasional.</p>
+        <div class="chip-row"><span class="chip">Angkatan 7</span><span class="chip">🥇 Tarik tambang</span><span class="chip">🚀 Roket air</span><span class="chip">Hafalan Juz 28–30</span></div>
+      </div>
+      <div class="chapter-media">
+        <div class="photo-grid" data-group="ch1">
+          <div class="photo-slot" data-slot="ch1-1"><span class="ph-icon">+</span><span class="ph-label">Foto SD</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+          <div class="photo-slot" data-slot="ch1-2"><span class="ph-icon">+</span><span class="ph-label">Foto SD</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+          <div class="photo-slot" data-slot="ch1-3"><span class="ph-icon">+</span><span class="ph-label">Lomba</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+        </div>
+        <button class="add-slot-btn" data-add="ch1">+ tambah foto</button>
+      </div>
+    </article>
+
+    <!-- Chapter 2 -->
+    <article class="chapter" data-chapter>
+      <div class="chapter-node"></div>
+      <div class="chapter-text">
+        <span class="chapter-label">2020 — 2023 · SMP Istiqomah Sambas Purbalingga</span>
+        <h2 class="chapter-title">Belajar di Tengah Pandemi</h2>
+        <p class="chapter-story" contenteditable="false" data-key="story-2">Masuk tepat saat pandemi baru mulai — kelas 1 penuh daring, kelas 2 sistem 50:50, baru kelas 3 masuk sekolah sepenuhnya. Ikut ekskul Sains, dan meski tak pernah ikut organisasi apa pun, selalu jadi yang paling rajin bersih-bersih kelas sepulang sekolah, sampai suka telat dijemput. Tiga tahun berturut-turut selalu kebagian kelas laki-laki penuh yang kompak banget. Angkatan ke-16.</p>
+        <div class="chip-row"><span class="chip">Angkatan 16</span><span class="chip">Ekskul Sains</span><span class="chip">Masa daring</span></div>
+      </div>
+      <div class="chapter-media">
+        <div class="photo-grid" data-group="ch2">
+          <div class="photo-slot" data-slot="ch2-1"><span class="ph-icon">+</span><span class="ph-label">Foto SMP</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+          <div class="photo-slot" data-slot="ch2-2"><span class="ph-icon">+</span><span class="ph-label">Foto SMP</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+          <div class="photo-slot" data-slot="ch2-3"><span class="ph-icon">+</span><span class="ph-label">Foto Kelas</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+        </div>
+        <button class="add-slot-btn" data-add="ch2">+ tambah foto</button>
+      </div>
+    </article>
+
+    <!-- Chapter 3 -->
+    <article class="chapter" data-chapter>
+      <div class="chapter-node"></div>
+      <div class="chapter-text">
+        <span class="chapter-label">2023 — 2026 · MA Sunan Pandanaran, Sleman, DIY</span>
+        <h2 class="chapter-title">Golden Age — Merantau ke Yogyakarta</h2>
+        <p class="chapter-story" contenteditable="false" data-key="story-3">Memberanikan diri merantau dan mondok di Pondok Pesantren Sunan Pandanaran, sekolah di Madrasah Aliyah di bawah yayasan yang sama. Angkatan ke-37, bernama GHAXORIST dengan maskot zebra. Tahun pertama masih adaptasi dengan kehidupan asrama; tahun kedua mulai mengabdi sebagai Humas merangkap Takmir — titik awal berani bicara di depan umum. Dipercaya menjadi Ketua Divisi Keagamaan HTT (OSIS) 2025/2026, Bendahara PMR Wira 2025/2026, Ketua Acara Idul Adha Pondok 2025, dan panitia Haflah Khotmil Qur'an ke-52 tahun 2026. Di kelas 3, masuk jajaran siswa eligible TKA di peringkat 83, dan memantapkan satu pilihan: Akuakultur UGM. Dibimbing oleh pengasuh pondok, Bapak Mutasim Billah. Kelulusan dari pondok terasa paling mengharukan dari semuanya — tiga tahun 24 jam bersama teman-teman seperjuangan.</p>
+        <div class="chip-row"><span class="chip">Angkatan 37 — GHAXORIST 🦓</span><span class="chip">TKA eligible #83</span><span class="chip">Humas + Takmir</span></div>
+      </div>
+      <div class="chapter-media">
+        <div class="photo-grid" data-group="ch3">
+          <div class="photo-slot" data-slot="ch3-1"><span class="ph-icon">+</span><span class="ph-label">Foto Pondok</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+          <div class="photo-slot" data-slot="ch3-2"><span class="ph-icon">+</span><span class="ph-label">Foto Kelas</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+          <div class="photo-slot" data-slot="ch3-3"><span class="ph-icon">+</span><span class="ph-label">Foto Wisuda</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+        </div>
+        <button class="add-slot-btn" data-add="ch3">+ tambah foto</button>
+      </div>
+    </article>
+
+    <!-- Chapter 4 -->
+    <article class="chapter" data-chapter>
+      <div class="chapter-node"></div>
+      <div class="chapter-text">
+        <span class="chapter-label">2026 — sekarang · Universitas Gadjah Mada, Akuakultur</span>
+        <h2 class="chapter-title">Menuju Muara — UGM Akuakultur</h2>
+        <p class="chapter-story" contenteditable="false" data-key="story-4">Lolos ke UGM lewat jalur SNBP, mengambil program studi Akuakultur, Fakultas Perikanan. Babak mahasiswa baru baru saja dimulai — cerita PKKMB, kehidupan kampus, dan teman-teman baru akan menyusul di sini seiring waktu berjalan.</p>
+        <div class="chip-row"><span class="chip">Jalur SNBP</span><span class="chip">Akuakultur</span><span class="chip">✨ Coming soon</span></div>
+      </div>
+      <div class="chapter-media">
+        <div class="photo-grid" data-group="ch4">
+          <div class="photo-slot" data-slot="ch4-1"><span class="ph-icon">+</span><span class="ph-label">PKKMB</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+          <div class="photo-slot" data-slot="ch4-2"><span class="ph-icon">+</span><span class="ph-label">Almamater</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+          <div class="photo-slot" data-slot="ch4-3"><span class="ph-icon">+</span><span class="ph-label">Kampus</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>
+        </div>
+        <button class="add-slot-btn" data-add="ch4">+ tambah foto</button>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= ORGANISASI & AMANAH ================= -->
+  <section class="section" id="organisasi">
+    <div class="section-head">
+      <div class="section-eyebrow">Amanah</div>
+      <h2 class="section-title">Organisasi &amp; Amanah</h2>
+      <p class="section-desc">Peran-peran yang pernah dipegang selama di pondok — tempat belajar tanggung jawab di luar kelas.</p>
+    </div>
+    <div class="grid-cards">
+      <div class="card"><span class="card-icon">🎙️</span><span class="card-tag">2024/2025</span><h3 class="card-title">Humas + Takmir</h3><p class="card-desc">Titik awal berani bicara di depan umum, mengurus komunikasi dan kegiatan keagamaan pondok.</p></div>
+      <div class="card"><span class="card-icon">🕌</span><span class="card-tag">2025/2026</span><h3 class="card-title">Ketua Divisi Keagamaan HTT (OSIS)</h3><p class="card-desc">Memimpin divisi keagamaan dalam struktur organisasi santri pondok pesantren.</p></div>
+      <div class="card"><span class="card-icon">🩹</span><span class="card-tag">2025/2026</span><h3 class="card-title">Bendahara PMR Wira</h3><p class="card-desc">Mengelola keuangan organisasi Palang Merah Remaja tingkat Wira.</p></div>
+      <div class="card"><span class="card-icon">🐄</span><span class="card-tag">2025</span><h3 class="card-title">Ketua Acara Idul Adha Pondok</h3><p class="card-desc">Memimpin penyelenggaraan acara Idul Adha Pondok Pesantren Sunan Pandanaran.</p></div>
+      <div class="card"><span class="card-icon">📖</span><span class="card-tag">2026</span><h3 class="card-title">Panitia Haflah Khotmil Qur'an ke-52</h3><p class="card-desc">Bagian dari panitia acara besar tahunan pondok — Haflah Khotmil Qur'an ke-52.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= PRESTASI / FUN FACTS ================= -->
+  <section class="section" id="prestasi">
+    <div class="section-head">
+      <div class="section-eyebrow">Jejak Kecil</div>
+      <h2 class="section-title">Prestasi &amp; Momen Berkesan</h2>
+      <p class="section-desc">Hal-hal kecil yang jadi kenangan sepanjang perjalanan sekolah.</p>
+    </div>
+    <div class="grid-cards">
+      <div class="card"><span class="card-icon">🥇</span><h3 class="card-title">Juara Tarik Tambang</h3><p class="card-desc">Kelas SD paling sering menang lomba tarik tambang sekolah.</p></div>
+      <div class="card"><span class="card-icon">🚀</span><h3 class="card-title">Lomba Roket Air</h3><p class="card-desc">Aktif ikut serta dalam kompetisi roket air semasa SD.</p></div>
+      <div class="card"><span class="card-icon">🧮</span><h3 class="card-title">Seleksi OSN Matematika</h3><p class="card-desc">Sempat mengikuti seleksi OSN Matematika — pengalaman yang berharga meski belum lolos.</p></div>
+      <div class="card"><span class="card-icon">📿</span><h3 class="card-title">Hafalan Juz 28–30</h3><p class="card-desc">Berhasil menyelesaikan hafalan Juz 30, 29, dan 28.</p></div>
+      <div class="card"><span class="card-icon">🎯</span><h3 class="card-title">Eligible TKA Peringkat 83</h3><p class="card-desc">Masuk jajaran siswa eligible TKA dan memantapkan pilihan pada Akuakultur UGM.</p></div>
+      <div class="card"><span class="card-icon">🦓</span><h3 class="card-title">GHAXORIST — Angkatan 37</h3><p class="card-desc">Bagian dari angkatan MA Sunan Pandanaran dengan maskot zebra.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= PROJECTS ================= -->
+  <section class="section" id="projects">
+    <div class="section-head">
+      <div class="section-eyebrow">Karya</div>
+      <h2 class="section-title">Project &amp; Portofolio</h2>
+      <p class="section-desc">Kumpulan karya dan eksperimen kreatif — klik area foto untuk menambahkan logo &amp; tangkapan layar sendiri.</p>
+    </div>
+    <div class="grid-cards" id="projectGrid">
+      <!-- project cards injected via template below for consistency -->
+    </div>
+  </section>
+
+  <!-- ================= TENTANG AKU ================= -->
+  <section class="section" id="about">
+    <div class="section-head">
+      <div class="section-eyebrow">Kenali Aku</div>
+      <h2 class="section-title">Tentang Aku</h2>
+      <p class="section-desc">Klik "Mode Edit" di pojok kanan bawah untuk mengisi bagian ini dengan kata-katamu sendiri.</p>
+    </div>
+    <div class="about-grid">
+      <div class="about-item"><h4>Hobi</h4><p contenteditable="false" data-key="about-hobi" class="placeholder-text">Tulis hobimu di sini...</p></div>
+      <div class="about-item"><h4>Keahlian</h4><p contenteditable="false" data-key="about-keahlian" class="placeholder-text">Tulis keahlianmu di sini...</p></div>
+      <div class="about-item"><h4>Hal yang Disukai</h4><p contenteditable="false" data-key="about-suka" class="placeholder-text">Tulis hal favoritmu di sini...</p></div>
+      <div class="about-item"><h4>Motto Hidup</h4><p contenteditable="false" data-key="about-motto" class="placeholder-text">Tulis motto hidupmu di sini...</p></div>
+      <div class="about-item"><h4>Quote Favorit</h4><p contenteditable="false" data-key="about-quote" class="placeholder-text">Tulis quote favoritmu di sini...</p></div>
+    </div>
+  </section>
+
+  <!-- ================= FUTURE GOALS ================= -->
+  <section class="section" id="goals">
+    <div class="section-head">
+      <div class="section-eyebrow">Ke Depan</div>
+      <h2 class="section-title">Peta Masa Depan</h2>
+      <p class="section-desc">Arah yang sedang diperjuangkan setelah babak ini.</p>
+    </div>
+    <div class="goal-list">
+      <div class="goal-item"><span class="goal-dot"></span><span contenteditable="false" data-key="goal-1">Lulus UGM Akuakultur dengan hasil terbaik.</span></div>
+      <div class="goal-item"><span class="goal-dot"></span><span contenteditable="false" data-key="goal-2">Lanjut studi ke luar negeri setelah lulus S1.</span></div>
+      <div class="goal-item"><span class="goal-dot"></span><span contenteditable="false" data-key="goal-3">Membesarkan TambakArts jadi studio sendiri.</span></div>
+      <div class="goal-item"><span class="goal-dot"></span><span contenteditable="false" data-key="goal-4">Hidup lebih sehat dan bugar, jadi versi terbaik diri sendiri.</span></div>
+      <div class="goal-item"><span class="goal-dot"></span><span contenteditable="false" data-key="goal-5">Traveling ke tempat-tempat baru.</span></div>
+    </div>
+  </section>
+
+  <!-- ================= GALLERY ================= -->
+  <section class="section" id="gallery">
+    <div class="section-head">
+      <div class="section-eyebrow">Galeri</div>
+      <h2 class="section-title">Momen Favorit</h2>
+      <p class="section-desc">Selfie, pemandangan, kampus, teman — kumpulan foto favorit versi kamu.</p>
+    </div>
+    <div class="gallery-grid" id="galleryGrid">
+      <!-- 8 default slots injected via JS -->
+    </div>
+    <div style="text-align:center;"><button class="add-slot-btn" data-add="gallery" style="margin-top:20px;">+ tambah foto galeri</button></div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section class="section" id="contact">
+    <div class="section-head">
+      <div class="section-eyebrow">Terhubung</div>
+      <h2 class="section-title">Kontak</h2>
+      <p class="section-desc">Ganti tulisan di bawah dengan akunmu sendiri lewat Mode Edit.</p>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-pill">📧 <span><span class="cp-label">Email</span><span contenteditable="false" data-key="contact-email">email@kamu.com</span></span></div>
+      <div class="contact-pill">📷 <span><span class="cp-label">Instagram</span><span contenteditable="false" data-key="contact-ig">@akunmu</span></span></div>
+      <div class="contact-pill">🎵 <span><span class="cp-label">TikTok</span><span contenteditable="false" data-key="contact-tiktok">@akunmu</span></span></div>
+      <div class="contact-pill">💼 <span><span class="cp-label">LinkedIn</span><span contenteditable="false" data-key="contact-linkedin">nama-kamu</span></span></div>
+      <div class="contact-pill">💻 <span><span class="cp-label">GitHub</span><span contenteditable="false" data-key="contact-github">username</span></span></div>
+    </div>
+  </section>
+
+  <footer>Dibuat dengan 🤍 — terus bertumbuh, terus berlayar menuju muara.</footer>
+</div>
+
+<!-- ================= EDIT TOOLBAR ================= -->
+<div class="toolbar">
+  <div class="toolbar-panel" id="toolbarPanel">
+    <button id="btnExport">⬇ Export data (.json)</button>
+    <button id="btnImport">⬆ Import data (.json)</button>
+    <button id="btnReset">🗑 Reset semua data</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
+  </div>
+  <button class="toolbar-main" id="btnEditToggle" title="Mode Edit" aria-label="Aktifkan mode edit">✎</button>
+</div>
+<div class="save-toast" id="saveToast">Tersimpan ✓</div>
+
+<script src="app.js"></script>
+</body>
+</html>

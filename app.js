@@ -611,6 +611,100 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
 })();
 
 
+/* ============================================================
+   CLOUD SYNC (Firebase Realtime Database)
+   Semua key yang diawali "myjourney_" sekarang otomatis ikut
+   disimpan ke Firebase, bukan cuma localStorage browser ini.
+   - Saat halaman dibuka: tarik data terbaru dari Firebase dulu
+     (menimpa localStorage lokal), BARU kode lain di bawah jalan
+     dan membaca localStorage seperti biasa — jadi tidak ada
+     satupun bagian lain dari file ini yang perlu diubah.
+   - Setiap localStorage.setItem("myjourney_...", ...) dipanggil,
+     otomatis dikirim juga ke Firebase (di-debounce per key).
+   - Kalau internet mati / Firebase gagal diakses, situs tetap
+     jalan normal pakai localStorage saja (tidak pernah nge-block
+     halaman).
+============================================================ */
+var FIREBASE_URL = "https://mnda-journey-default-rtdb.asia-southeast1.firebasedatabase.app";
+var CLOUD_SYNC_READY = false; // jadi true setelah tarikan awal dari Firebase selesai (atau gagal)
+
+(function cloudSyncSetup() {
+  var PREFIX = "myjourney_";
+  if (!FIREBASE_URL) return; // belum diisi — jalan seperti biasa, localStorage saja
+
+  // key yang TIDAK usah disinkron ke semua device (murni preferensi
+  // lokal per-browser): status "sudah lihat intro zebra", info bar
+  // di-dismiss, dan status owner (siapa yang boleh edit di device ini).
+  var LOCAL_ONLY_SUFFIXES = ["owner", "infobar_dismissed"];
+  function isLocalOnly(key) {
+    for (var i = 0; i < LOCAL_ONLY_SUFFIXES.length; i++) {
+      if (key === PREFIX + LOCAL_ONLY_SUFFIXES[i]) return true;
+    }
+    return false;
+  }
+  function cloudKeyFor(key) {
+    // Firebase key tidak boleh mengandung karakter . $ # [ ] / — key kita
+    // (myjourney_xxx) sudah aman, tapi jaga-jaga tetap di-encode.
+    return encodeURIComponent(key);
+  }
+
+  /* ---- 1. Tarik semua data dari Firebase SEBELUM kode lain baca localStorage ---- */
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", FIREBASE_URL + "/myjourney.json", false /* SYNC — sengaja, biar kode di bawah pasti nunggu */);
+  try {
+    xhr.send(null);
+    if (xhr.status >= 200 && xhr.status < 300) {
+      var remote = JSON.parse(xhr.responseText || "null");
+      if (remote && typeof remote === "object") {
+        Object.keys(remote).forEach(function (encKey) {
+          var key = decodeURIComponent(encKey);
+          if (isLocalOnly(key)) return;
+          try { localStorage.setItem(key, remote[encKey]); } catch (e) {}
+        });
+      }
+    }
+  } catch (e) {
+    // offline atau Firebase belum bisa diakses — lanjut pakai localStorage lokal saja
+  }
+  CLOUD_SYNC_READY = true;
+
+  /* ---- 2. Setiap localStorage.setItem untuk key kita, juga kirim ke Firebase ---- */
+  var pushTimers = {};
+  function pushToCloud(key, value) {
+    if (isLocalOnly(key)) return;
+    clearTimeout(pushTimers[key]);
+    pushTimers[key] = setTimeout(function () {
+      var url = FIREBASE_URL + "/myjourney/" + cloudKeyFor(key) + ".json";
+      var xhr2 = new XMLHttpRequest();
+      xhr2.open("PUT", url, true);
+      xhr2.setRequestHeader("Content-Type", "application/json");
+      try { xhr2.send(JSON.stringify(value)); } catch (e) {}
+    }, 400);
+  }
+  function pushDeleteToCloud(key) {
+    if (isLocalOnly(key)) return;
+    var url = FIREBASE_URL + "/myjourney/" + cloudKeyFor(key) + ".json";
+    var xhr3 = new XMLHttpRequest();
+    xhr3.open("DELETE", url, true);
+    try { xhr3.send(null); } catch (e) {}
+  }
+
+  var origSetItem = Storage.prototype.setItem;
+  var origRemoveItem = Storage.prototype.removeItem;
+  Storage.prototype.setItem = function (key, value) {
+    origSetItem.apply(this, arguments);
+    if (this === window.localStorage && key.indexOf(PREFIX) === 0) {
+      pushToCloud(key, value);
+    }
+  };
+  Storage.prototype.removeItem = function (key) {
+    origRemoveItem.apply(this, arguments);
+    if (this === window.localStorage && key.indexOf(PREFIX) === 0) {
+      pushDeleteToCloud(key);
+    }
+  };
+})();
+
 (function(){
 "use strict";
 

@@ -7,7 +7,7 @@
 <meta name="description" content="Perjalanan hidup Muhammad Nabil Dzikri Ashoffat (TomTom), dari Purbalingga menuju Akuakultur UGM.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --void:#060b13;
@@ -22,7 +22,8 @@
   --star:#eef3f5;
   --muted:#8aa0b0;
   --muted-2:#5c7284;
-  --font-display:'Fraunces', serif;
+  --font-display:'Bricolage Grotesque', sans-serif;
+  --font-accent:'Fraunces', serif;
   --font-body:'Plus Jakarta Sans', sans-serif;
   --font-mono:'Space Mono', monospace;
   --maxw:1080px;
@@ -50,19 +51,368 @@ body{
 a{color:var(--aqua);}
 :focus-visible{outline:2px solid var(--aqua); outline-offset:3px; border-radius:4px;}
 
+/* ============ GLOW-ON-HOVER (universal interactive feedback) ============ */
+.card, .photo-slot, .chip, .contact-pill, .goal-item, .add-slot-btn,
+.toolbar-main, .toolbar-panel button, .infobar button, .about-item{
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+.card:hover, .about-item:hover{
+  border-color: var(--aqua-dim);
+  box-shadow: 0 0 0 1px var(--aqua-dim), 0 8px 32px rgba(63,224,197,0.14);
+}
+.photo-slot:hover{
+  box-shadow: 0 0 0 1px var(--aqua-dim), 0 0 24px rgba(63,224,197,0.22);
+}
+.chip:hover{
+  box-shadow: 0 0 12px var(--aqua-dim);
+  color: var(--star);
+}
+.contact-pill:hover, .goal-item:hover{
+  box-shadow: 0 0 0 1px var(--aqua-dim), 0 6px 24px rgba(63,224,197,0.16);
+}
+.add-slot-btn:hover, .toolbar-panel button:hover, .infobar button:hover{
+  box-shadow: 0 0 14px var(--aqua-dim);
+}
+.toolbar-main:hover{
+  box-shadow: 0 0 0 4px rgba(63,224,197,0.15), 0 0 26px var(--aqua-dim);
+  transform: scale(1.06);
+}
+button, a, .photo-slot, [data-add], [data-add-card]{cursor:pointer;}
+
 /* ============ BACKGROUND CANVAS ============ */
 #bgCanvas{
   position:fixed; inset:0; width:100%; height:100%;
   z-index:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(63,224,197,0.10), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 85% 20%, rgba(232,185,77,0.06), transparent 60%),
-    linear-gradient(180deg, #060b13 0%, #081420 35%, #0a1a28 70%, #071019 100%);
+    radial-gradient(ellipse 70% 45% at 78% 8%, rgba(122,95,201,0.16), transparent 62%),
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(63,224,197,0.09), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 20%, rgba(232,185,77,0.07), transparent 60%),
+    linear-gradient(180deg, #0d0a22 0%, #12102c 14%, #0c1b2c 38%, #0a1a28 70%, #071019 100%);
 }
+
+/* Aurora — slow drifting glow blobs for extra atmosphere */
+.aurora{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;}
+.aurora span{
+  position:absolute; border-radius:50%; filter:blur(60px); opacity:0.16;
+  animation:auroraDrift linear infinite;
+}
+.aurora span:nth-child(1){width:38vw; height:38vw; left:-8vw; top:5vh; background:var(--aqua); animation-duration:34s;}
+.aurora span:nth-child(2){width:30vw; height:30vw; right:-6vw; top:35vh; background:var(--gold); animation-duration:42s; animation-delay:-8s;}
+.aurora span:nth-child(3){width:26vw; height:26vw; left:20vw; bottom:-8vh; background:var(--aqua); animation-duration:38s; animation-delay:-20s;}
+@keyframes auroraDrift{
+  0%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(6vw,4vh) scale(1.12);}
+  66%{transform:translate(-4vw,6vh) scale(0.94);}
+  100%{transform:translate(0,0) scale(1);}
+}
+
+/* Gallery — 3D "window opening" reveal on scroll */
+.gallery-grid .photo-slot{
+  opacity:0; transform:perspective(900px) rotateY(55deg) translateZ(-40px) scale(0.85);
+  transition:opacity 0.7s ease, transform 0.7s cubic-bezier(.2,.8,.2,1);
+  transform-origin:left center;
+}
+.gallery-grid .photo-slot.win-open{
+  opacity:1; transform:perspective(900px) rotateY(0deg) translateZ(0) scale(1);
+}
+.gallery-grid .photo-slot:nth-child(even){transform-origin:right center;}
+.gallery-grid .photo-slot:nth-child(even):not(.win-open){transform:perspective(900px) rotateY(-55deg) translateZ(-40px) scale(0.85);}
 
 .grain{
   position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0.035; mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+#sparkleCanvas{position:fixed; inset:0; width:100%; height:100%; z-index:997; pointer-events:none;}
+@media (hover:none){ #sparkleCanvas{display:none;} }
+
+/* ============ ZEBRA 3D MASCOT ============ */
+#zebraWidget{
+  position:fixed; right:14px; bottom:14px; z-index:45;
+  width:180px; height:180px; pointer-events:none;
+  filter:drop-shadow(0 10px 26px rgba(0,0,0,0.45));
+}
+#zebraCanvas{width:180px; height:180px; display:block; pointer-events:auto; cursor:grab; touch-action:none;}
+#zebraBubble{
+  position:absolute; bottom:172px; right:8px; max-width:200px;
+  background:var(--card); border:1px solid var(--card-line); border-radius:14px 14px 4px 14px;
+  padding:10px 14px; font-family:var(--font-body); font-size:12.5px; color:var(--star);
+  box-shadow:0 8px 24px rgba(0,0,0,0.35);
+  opacity:0; transform:translateY(8px); transition:opacity 0.5s ease, transform 0.5s ease;
+}
+#zebraBubble.show{opacity:1; transform:translateY(0);}
+@media (max-width:759px){ #zebraWidget{display:none;} }
+
+/* ============ STORY BACKGROUND — sequential "pop then recede" scenery ============ */
+/* 5 full-bleed illustrated scenes (sky -> mountains/waterfall -> forest ->
+   rumah -> foreground grass), each covering the ENTIRE viewport edge-to-edge
+   (object-fit:cover, no gaps). Only the "current" scene and the one behind
+   it are ever relevant at once. As you scroll through a scene's stretch:
+     1) it sits still, fully sharp;
+     2) then it starts receding — continuously shrinking, dimming and
+        drifting back (scroll-scrubbed 1:1 with your scroll, class px-scrub
+        disables the eased transition so it tracks the scrollbar exactly);
+     3) partway through, the NEXT scene pops in already fully sharp/opaque
+        (a quick eased "arrival" transition, not a slow fade) and covers it.
+   Sky is the one exception: since it's a plain rectangle with no soft
+   transparent edge, it recedes via blur + fade only (no scale/drift), so
+   its hard corners never become visible.
+   A separate inner ".px-layer-drift" wrapper carries a small continuous
+   ambient sway + mouse-parallax offset, independent of the pop/recede
+   transition so the two motions never fight each other.
+   Fades out (down to a dim floor, never fully) once past the journey track. */
+.px-scene{
+  position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+  opacity:1; transition:opacity 0.5s ease;
+  background:#141c30;
+}
+.px-scene.px-hide{opacity:0;}
+#pxLayers{position:absolute; inset:0; width:100%; height:100%;}
+.px-layer{
+  position:absolute; inset:0; width:100%; height:100%;
+  opacity:0; will-change:opacity, transform, filter;
+  transform-origin:50% 50%;
+  transition:transform .85s cubic-bezier(.16,1,.3,1), opacity .5s ease, filter .6s ease;
+}
+.px-layer.px-scrub{ transition:none; }
+.px-layer-drift{ position:absolute; inset:0; width:100%; height:100%; will-change:transform; }
+.px-layer img{display:block; width:100%; height:100%; object-fit:cover;}
+/* Soft-edge feather: keeps the whole scene visible, but fades the outer rim to
+   transparent instead of a hard rectangle — so when a layer scales down during
+   the scroll recede, its border never reveals a sharp cut. */
+.px-layer:not(.px-school-layer) .px-layer-drift > img{
+  -webkit-mask-image:radial-gradient(ellipse 150% 150% at 50% 50%, #000 58%, transparent 100%);
+  mask-image:radial-gradient(ellipse 150% 150% at 50% 50%, #000 58%, transparent 100%);
+}
+#pxSky img{ object-position:50% 20%; }
+#pxMountains img{ object-position:50% 58%; }
+#pxForest img{ object-position:50% 78%; }
+#pxHouse img{ object-position:50% 55%; }
+#pxForeground img{ object-position:50% 92%; }
+
+/* ---------- School scenes (TK -> SD -> SMP -> SMA), same pop/recede system ----------
+   Unlike the other layers (single full-bleed photo), each of these is a small
+   composited scene: a gradient sky/ground backdrop (so scaling never reveals a
+   hard image edge) + a building cutout + a characters cutout, all riding
+   together inside the same .px-layer-drift wrapper so ambient sway / mouse
+   parallax / scroll recede affect the whole mini-scene as one piece. */
+.px-school-bg{position:absolute; inset:0; width:100%; height:100%;}
+.px-school-layer .px-layer-drift img{
+  position:absolute; left:50%; top:auto; object-fit:contain; pointer-events:none;
+  -webkit-mask-image:radial-gradient(ellipse 118% 118% at 50% 50%, #000 88%, transparent 100%);
+  mask-image:radial-gradient(ellipse 118% 118% at 50% 50%, #000 88%, transparent 100%);
+}
+.px-school-layer .px-layer-drift img.px-school-building{
+  bottom:24%; transform:translateX(-50%);
+  width:min(78vw, 1040px); max-height:74vh;
+  filter:drop-shadow(0 30px 60px rgba(0,0,0,0.55));
+}
+.px-school-layer .px-layer-drift img.px-school-characters{
+  bottom:0%; transform:translateX(-50%);
+  width:min(112vw, 1560px); max-height:50vh;
+}
+#pxTK .px-school-bg{background:
+  radial-gradient(ellipse 62% 56% at 50% 40%, rgba(232,185,77,0.40), transparent 72%),
+  radial-gradient(ellipse 48% 30% at 50% 88%, rgba(63,224,197,0.18), transparent 74%);}
+#pxSD .px-school-bg{background:
+  radial-gradient(ellipse 64% 56% at 50% 38%, rgba(63,224,197,0.38), transparent 72%),
+  radial-gradient(ellipse 48% 30% at 50% 88%, rgba(232,185,77,0.16), transparent 74%);}
+#pxSMP .px-school-bg{background:
+  radial-gradient(ellipse 62% 56% at 50% 38%, rgba(122,95,201,0.38), transparent 72%),
+  radial-gradient(ellipse 48% 30% at 50% 88%, rgba(63,224,197,0.16), transparent 74%);}
+#pxSMA .px-school-bg{background:
+  radial-gradient(ellipse 64% 56% at 50% 36%, rgba(232,185,77,0.44), transparent 72%),
+  radial-gradient(ellipse 48% 30% at 50% 88%, rgba(63,224,197,0.18), transparent 74%);}
+#pxFireflies{position:absolute; inset:0; width:100%; height:100%; z-index:6;}
+.px-fade{
+  position:absolute; left:0; right:0; bottom:0; height:38vh; z-index:5;
+  background:linear-gradient(180deg, transparent, var(--void) 88%);
+}
+@media (prefers-reduced-motion: reduce){ .px-layer{ transition:none !important; } .px-layer-drift{ transform:none !important; } }
+
+/* ============ SCENE FX — birds, butterflies, leaves, petals, clouds, fog,
+   grass, flag, sparkles, lensflare living on top of every background scene.
+   Injected by JS (see initSceneFX in app.js) into a .px-fx layer inside each
+   scene's .px-layer-drift, so they inherit the same ambient sway, mouse
+   parallax and scroll pop/recede as the artwork behind them for free. ============ */
+.px-fx{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:2;}
+
+/* ---- whole-image ambient layers: clouds / fog / grass / particles ---- */
+.fx-cloud, .fx-fog, .fx-particles{
+  -webkit-mask-image:radial-gradient(ellipse 68% 62% at 50% 50%, #000 62%, transparent 100%);
+  mask-image:radial-gradient(ellipse 68% 62% at 50% 50%, #000 62%, transparent 100%);
+}
+.fx-cloud{position:absolute; top:-6%; left:-30%; width:160%; max-width:none; opacity:0.55; will-change:transform; animation:fxCloudDrift 110s linear infinite;}
+.fx-cloud-b{opacity:0.32; animation-duration:150s; animation-direction:reverse;}
+.fx-cloud-slow{opacity:0.4; animation-duration:170s;}
+@keyframes fxCloudDrift{ from{transform:translateX(0);} to{transform:translateX(-14%);} }
+
+.fx-fog{position:absolute; left:-18%; bottom:-4%; width:136%; max-width:none; opacity:0.5; will-change:transform; animation:fxFogDrift 24s ease-in-out infinite alternate;}
+.fx-fog-soft{opacity:0.3;}
+.fx-fog-anim{mix-blend-mode:screen;}
+@keyframes fxFogDrift{ from{transform:translateX(-3%) scaleX(1);} to{transform:translateX(3%) scaleX(1.03);} }
+
+.fx-particles{position:absolute; inset:-6%; width:112%; height:112%; max-width:none; object-fit:cover; opacity:0.5; mix-blend-mode:screen; will-change:transform, opacity; animation:fxParticleDrift 20s ease-in-out infinite alternate, fxParticleTwinkle 4.5s ease-in-out infinite;}
+.fx-particles-dim{opacity:0.26;}
+@keyframes fxParticleDrift{ from{transform:translateY(0);} to{transform:translateY(-3.5%);} }
+@keyframes fxParticleTwinkle{ 0%,100%{opacity:0.35;} 50%{opacity:0.62;} }
+
+.fx-grass{position:absolute; left:-6%; bottom:-3%; width:112%; max-width:none; transform-origin:bottom center; will-change:transform; animation:fxGrassSway 5.5s ease-in-out infinite;
+  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 18%, #000 100%);
+  mask-image:linear-gradient(180deg, transparent 0%, #000 18%, #000 100%);
+}
+.fx-grass-b{opacity:0.85; animation-duration:7s; animation-direction:reverse;}
+@keyframes fxGrassSway{0%,100%{transform:skewX(-1.1deg) rotate(0.15deg);} 50%{transform:skewX(1.3deg) rotate(-0.15deg);}}
+
+/* ---- flag: waving Merah-Putih ---- */
+.fx-flag{position:absolute; top:9%; right:7%; width:min(150px, 17vw); transform-origin:2% 25%; filter:drop-shadow(0 10px 20px rgba(0,0,0,0.4)); will-change:transform; animation:fxFlagWave 3.1s ease-in-out infinite;}
+.fx-flag img{display:block; width:100%; height:auto;}
+@keyframes fxFlagWave{
+  0%{transform:rotate(0deg) skewY(0deg) scaleX(1);}
+  25%{transform:rotate(1.4deg) skewY(-3.2deg) scaleX(1.025);}
+  50%{transform:rotate(-0.7deg) skewY(1.2deg) scaleX(0.985);}
+  75%{transform:rotate(1.6deg) skewY(-2.2deg) scaleX(1.015);}
+  100%{transform:rotate(0deg) skewY(0deg) scaleX(1);}
+}
+
+/* ---- lens flare glints ---- */
+.fx-flare{position:absolute; width:120px; max-width:22vw; mix-blend-mode:screen; opacity:0.4; will-change:transform, opacity; animation:fxFlarePulse var(--dur,7s) ease-in-out infinite; animation-delay:var(--delay,0s);}
+.fx-flare img{display:block; width:100%; height:auto;}
+@keyframes fxFlarePulse{
+  0%,100%{opacity:0.22; transform:scale(0.88) rotate(0deg);}
+  50%{opacity:0.7; transform:scale(1.1) rotate(6deg);}
+}
+
+/* ---- flying creatures: birds & butterflies ----
+   Outer wrapper only carries a static random scale; the inner wrapper
+   carries the actual flight-path animation, so the two transforms never
+   fight each other. */
+.fx-flyer{position:absolute; will-change:transform;}
+.fx-flyer-inner{will-change:transform, opacity;}
+.fx-flyer-inner img{display:block;
+  -webkit-mask-image:radial-gradient(ellipse 120% 120% at 50% 50%, #000 86%, transparent 100%);
+  mask-image:radial-gradient(ellipse 120% 120% at 50% 50%, #000 86%, transparent 100%);
+}
+.fx-bird .fx-flyer-inner img{width:60px; height:auto;}
+.fx-butterfly .fx-flyer-inner img{width:42px; height:auto;}
+
+.fx-dir-r{left:-14%;}
+.fx-dir-l{left:auto; right:-14%;}
+.fx-bird.fx-dir-r .fx-flyer-inner{animation:fxFlyR var(--dur,20s) linear infinite; animation-delay:var(--delay,0s);}
+.fx-bird.fx-dir-l .fx-flyer-inner{animation:fxFlyL var(--dur,20s) linear infinite; animation-delay:var(--delay,0s);}
+.fx-butterfly.fx-dir-r .fx-flyer-inner{animation:fxFlutterR var(--dur,16s) ease-in-out infinite; animation-delay:var(--delay,0s);}
+.fx-butterfly.fx-dir-l .fx-flyer-inner{animation:fxFlutterL var(--dur,16s) ease-in-out infinite; animation-delay:var(--delay,0s);}
+
+@keyframes fxFlyR{
+  0%{transform:translate(0,0) rotate(-4deg); opacity:0;}
+  6%{opacity:1;}
+  30%{transform:translate(46vw,-6vh) rotate(3deg);}
+  55%{transform:translate(82vw,3vh) rotate(-3deg);}
+  80%{transform:translate(114vw,-5vh) rotate(4deg);}
+  94%{opacity:1;}
+  100%{transform:translate(128vw,0) rotate(0deg); opacity:0;}
+}
+@keyframes fxFlyL{
+  0%{transform:translate(0,0) scaleX(-1) rotate(4deg); opacity:0;}
+  6%{opacity:1;}
+  30%{transform:translate(-46vw,-5vh) scaleX(-1) rotate(-3deg);}
+  55%{transform:translate(-82vw,4vh) scaleX(-1) rotate(3deg);}
+  80%{transform:translate(-114vw,-4vh) scaleX(-1) rotate(-4deg);}
+  94%{opacity:1;}
+  100%{transform:translate(-128vw,0) scaleX(-1) rotate(0deg); opacity:0;}
+}
+@keyframes fxFlutterR{
+  0%{transform:translate(0,0) rotate(-6deg) scaleX(1); opacity:0;}
+  5%{opacity:1;}
+  15%{transform:translate(9vw,-3vh) rotate(8deg) scaleX(0.72);}
+  30%{transform:translate(20vw,-8vh) rotate(-6deg) scaleX(1);}
+  45%{transform:translate(31vw,-4vh) rotate(7deg) scaleX(0.72);}
+  60%{transform:translate(42vw,-10vh) rotate(-5deg) scaleX(1);}
+  75%{transform:translate(53vw,-5vh) rotate(6deg) scaleX(0.72);}
+  90%{transform:translate(64vw,-9vh) rotate(-4deg) scaleX(1); opacity:1;}
+  100%{transform:translate(75vw,-6vh) rotate(0deg) scaleX(1); opacity:0;}
+}
+@keyframes fxFlutterL{
+  0%{transform:translate(0,0) rotate(6deg) scaleX(-1); opacity:0;}
+  5%{opacity:1;}
+  15%{transform:translate(-9vw,-3vh) rotate(-8deg) scaleX(-0.72);}
+  30%{transform:translate(-20vw,-8vh) rotate(6deg) scaleX(-1);}
+  45%{transform:translate(-31vw,-4vh) rotate(-7deg) scaleX(-0.72);}
+  60%{transform:translate(-42vw,-10vh) rotate(5deg) scaleX(-1);}
+  75%{transform:translate(-53vw,-5vh) rotate(-6deg) scaleX(-0.72);}
+  90%{transform:translate(-64vw,-9vh) rotate(4deg) scaleX(-1); opacity:1;}
+  100%{transform:translate(-75vw,-6vh) rotate(0deg) scaleX(-1); opacity:0;}
+}
+
+/* ---- school scenes: buildings sit in a centered ~78vw column, so keep the
+   flyers looping within that same footprint instead of edge-to-edge across
+   the whole viewport — keeps the scene feeling composed, not scattered. ---- */
+.px-school-layer .fx-dir-r{left:16%;}
+.px-school-layer .fx-dir-l{left:auto; right:16%;}
+.px-school-layer .fx-bird.fx-dir-r .fx-flyer-inner{animation-name:fxFlyR-School;}
+.px-school-layer .fx-bird.fx-dir-l .fx-flyer-inner{animation-name:fxFlyL-School;}
+.px-school-layer .fx-butterfly.fx-dir-r .fx-flyer-inner{animation-name:fxFlutterR-School;}
+.px-school-layer .fx-butterfly.fx-dir-l .fx-flyer-inner{animation-name:fxFlutterL-School;}
+
+@keyframes fxFlyR-School{
+  0%{transform:translate(0,0) rotate(-4deg); opacity:0;}
+  10%{opacity:1;}
+  40%{transform:translate(20vw,-5vh) rotate(3deg);}
+  70%{transform:translate(38vw,4vh) rotate(-3deg);}
+  90%{opacity:1;}
+  100%{transform:translate(50vw,0) rotate(0deg); opacity:0;}
+}
+@keyframes fxFlyL-School{
+  0%{transform:translate(0,0) scaleX(-1) rotate(4deg); opacity:0;}
+  10%{opacity:1;}
+  40%{transform:translate(-20vw,-4vh) scaleX(-1) rotate(-3deg);}
+  70%{transform:translate(-38vw,4vh) scaleX(-1) rotate(3deg);}
+  90%{opacity:1;}
+  100%{transform:translate(-50vw,0) scaleX(-1) rotate(0deg); opacity:0;}
+}
+@keyframes fxFlutterR-School{
+  0%{transform:translate(0,0) rotate(-6deg) scaleX(1); opacity:0;}
+  8%{opacity:1;}
+  22%{transform:translate(6vw,-3vh) rotate(8deg) scaleX(0.72);}
+  42%{transform:translate(13vw,-7vh) rotate(-6deg) scaleX(1);}
+  62%{transform:translate(20vw,-3vh) rotate(7deg) scaleX(0.72);}
+  85%{transform:translate(27vw,-8vh) rotate(-5deg) scaleX(1); opacity:1;}
+  100%{transform:translate(34vw,-5vh) rotate(0deg) scaleX(1); opacity:0;}
+}
+@keyframes fxFlutterL-School{
+  0%{transform:translate(0,0) rotate(6deg) scaleX(-1); opacity:0;}
+  8%{opacity:1;}
+  22%{transform:translate(-6vw,-3vh) rotate(-8deg) scaleX(-0.72);}
+  42%{transform:translate(-13vw,-7vh) rotate(6deg) scaleX(-1);}
+  62%{transform:translate(-20vw,-3vh) rotate(-7deg) scaleX(-0.72);}
+  85%{transform:translate(-27vw,-8vh) rotate(5deg) scaleX(-1); opacity:1;}
+  100%{transform:translate(-34vw,-5vh) rotate(0deg) scaleX(-1); opacity:0;}
+}
+
+/* ---- falling leaves & petals ---- */
+.fx-faller{position:absolute; top:-12%; will-change:transform;}
+.fx-faller-inner{will-change:transform, opacity; animation:fxFall var(--dur,14s) linear infinite; animation-delay:var(--delay,0s);}
+.fx-faller-inner img{display:block;
+  -webkit-mask-image:radial-gradient(ellipse 120% 120% at 50% 50%, #000 86%, transparent 100%);
+  mask-image:radial-gradient(ellipse 120% 120% at 50% 50%, #000 86%, transparent 100%);
+}
+.fx-leaf .fx-faller-inner img{width:34px; height:auto;}
+.fx-petal .fx-faller-inner img{width:26px; height:auto;}
+@keyframes fxFall{
+  0%{transform:translate(0,0) rotate(0deg); opacity:0;}
+  8%{opacity:1;}
+  50%{transform:translate(var(--drift,4vw), 58vh) rotate(180deg);}
+  92%{opacity:0.9;}
+  100%{transform:translate(calc(var(--drift,4vw) * -1), 118vh) rotate(360deg); opacity:0;}
+}
+
+@media (prefers-reduced-motion: reduce){ .px-fx *{ animation:none !important; } }
+@media (max-width:820px){
+  .fx-flag{width:min(110px, 22vw); top:7%; right:5%;}
+  .fx-flare{width:90px;}
+  .fx-bird .fx-flyer-inner img{width:44px;}
+  .fx-butterfly .fx-flyer-inner img{width:32px;}
+  .fx-leaf .fx-faller-inner img{width:26px;}
+  .fx-petal .fx-faller-inner img{width:20px;}
 }
 
 /* ============ LAYOUT SHELL ============ */
@@ -88,35 +438,48 @@ a{color:var(--aqua);}
 /* ============ HERO ============ */
 .hero{
   min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  text-align:center; padding:120px 24px 80px; position:relative;
+  text-align:center; padding:140px 24px 100px; position:relative; gap:0; isolation:isolate;
+}
+.hero > *{position:relative; z-index:1;}
+/* Soft dark "spotlight" behind the text block — feathered, no hard box edge —
+   so white text stays legible even when the sky behind it turns bright. */
+.hero::before{
+  content:""; position:absolute; left:50%; top:50%; z-index:0; pointer-events:none;
+  width:min(96vw, 980px); height:min(88vh, 620px); transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse 55% 60% at 50% 50%, rgba(4,8,16,0.72), rgba(4,8,16,0.42) 45%, transparent 72%);
+}
+.hero-eyebrow, .hero-name, .hero-nick, .hero-sub, .hero-meta{
+  text-shadow:0 2px 20px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.75);
 }
 .hero-eyebrow{
   font-family:var(--font-mono); letter-spacing:0.35em; font-size:12px; color:var(--aqua);
-  text-transform:uppercase; margin-bottom:22px; opacity:0;
+  text-transform:uppercase; margin-bottom:26px; opacity:0;
   animation:fadeUp 1s ease forwards 0.1s;
 }
 .hero-name{
-  font-family:var(--font-display); font-weight:600; font-size:clamp(2.4rem, 7vw, 5.2rem);
-  line-height:1.05; margin:0; max-width:900px; opacity:0;
+  font-family:var(--font-display); font-weight:700; font-size:clamp(2.4rem, 7vw, 5.2rem);
+  line-height:1.08; margin:0; max-width:900px; opacity:0;
   animation:fadeUp 1s ease forwards 0.3s;
 }
 .hero-nick{
   display:inline-flex; align-items:center; gap:8px; margin-top:26px;
   font-family:var(--font-mono); font-size:13px; color:var(--gold);
   border:1px solid var(--gold-dim); padding:8px 18px; border-radius:30px;
+  background:rgba(6,11,19,0.4); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
   opacity:0; animation:fadeUp 1s ease forwards 0.5s;
 }
 .hero-nick .dot{width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px var(--gold);}
 .hero-sub{
-  max-width:560px; margin-top:28px; color:var(--muted); font-size:16px;
+  max-width:560px; margin-top:28px; color:var(--muted); font-size:17px;
+  font-family:var(--font-accent); font-style:italic; font-weight:500;
   opacity:0; animation:fadeUp 1s ease forwards 0.7s;
 }
 .hero-meta{
-  margin-top:20px; font-family:var(--font-mono); font-size:12px; color:var(--muted-2);
+  margin-top:24px; font-family:var(--font-mono); font-size:12px; color:var(--muted-2); letter-spacing:0.08em;
   opacity:0; animation:fadeUp 1s ease forwards 0.85s;
 }
 .hero-scroll{
-  position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+  position:absolute; bottom:28px; left:50%; transform:translateX(-50%); z-index:1;
   display:flex; flex-direction:column; align-items:center; gap:8px;
   color:var(--muted-2); font-family:var(--font-mono); font-size:10px; letter-spacing:0.2em;
   opacity:0; animation:fadeUp 1s ease forwards 1.1s;
@@ -128,7 +491,11 @@ a{color:var(--aqua);}
 
 /* ============ SECTION HEADERS ============ */
 .section{padding:90px 24px; position:relative;}
-.section-head{max-width:640px; margin:0 auto 56px; text-align:center;}
+.section-head{
+  max-width:640px; margin:0 auto 56px; text-align:center;
+  background:rgba(6,11,19,0.4); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-radius:18px; padding:22px 26px;
+}
 .section-eyebrow{
   font-family:var(--font-mono); font-size:11px; letter-spacing:0.3em; text-transform:uppercase;
   color:var(--aqua); margin-bottom:14px;
@@ -159,6 +526,31 @@ a{color:var(--aqua);}
   100%{transform:translateY(-110vh) translateX(var(--drift,10px)); opacity:0;}
 }
 
+/* Traveling comet — marks current scroll progress on the spine, with a soft
+   pulsing halo so the line reads as a living current rather than a bare ruler. */
+.track-comet{
+  position:absolute; left:50%; top:0; width:0; height:0; z-index:4; pointer-events:none;
+  opacity:0; transition:opacity 0.4s ease;
+}
+.track-comet.is-active{opacity:1;}
+.track-comet::before{
+  content:""; position:absolute; left:0; top:0; width:14px; height:14px; margin:-7px 0 0 -7px;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #f4fffb 0%, var(--aqua) 45%, rgba(63,224,197,0.15) 78%, transparent 100%);
+  box-shadow:0 0 10px 3px rgba(63,224,197,0.55), 0 0 28px 10px rgba(63,224,197,0.22);
+  animation:cometPulse 2.4s ease-in-out infinite;
+}
+.track-comet::after{
+  content:""; position:absolute; left:0; top:0; width:34px; height:34px; margin:-17px 0 0 -17px;
+  border-radius:50%; background:radial-gradient(circle, rgba(232,185,77,0.28), transparent 70%);
+  animation:cometPulse 2.4s ease-in-out infinite reverse;
+}
+@keyframes cometPulse{
+  0%,100%{transform:scale(0.85); opacity:0.75;}
+  50%{transform:scale(1.15); opacity:1;}
+}
+@media (prefers-reduced-motion: reduce){ .track-comet::before, .track-comet::after{animation:none;} }
+
 .chapter{
   position:relative; z-index:2; display:grid; grid-template-columns:1fr 1fr;
   gap:50px; align-items:center; padding:70px 0;
@@ -174,19 +566,33 @@ a{color:var(--aqua);}
   border-color:var(--aqua); background:var(--aqua);
   box-shadow:0 0 0 6px rgba(63,224,197,0.15), 0 0 18px var(--aqua);
 }
-.chapter-text{opacity:0; transform:translateY(24px); transition:opacity 0.8s ease, transform 0.8s ease;}
+.chapter-text{
+  opacity:0; transform:translateY(24px); transition:opacity 0.8s ease, transform 0.8s ease;
+  background:linear-gradient(150deg, rgba(6,11,19,0.72), rgba(6,11,19,0.5) 60%, rgba(6,11,19,0.62));
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(148,187,203,0.10);
+  border-radius:20px; padding:28px 30px;
+}
 .chapter-media{opacity:0; transform:translateY(24px); transition:opacity 0.8s ease 0.15s, transform 0.8s ease 0.15s;}
 .chapter.inview .chapter-text, .chapter.inview .chapter-media{opacity:1; transform:translateY(0);}
 
+.chapter-label-row{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+.chapter-logo{
+  width:32px; height:32px; object-fit:contain; flex-shrink:0;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+}
+.chapter-logo-ugm{width:24px; height:24px;}
 .chapter-label{
   font-family:var(--font-mono); font-size:12px; color:var(--gold); letter-spacing:0.05em;
-  margin-bottom:10px; display:block;
+  display:block;
+  text-shadow:0 2px 14px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.65);
 }
 .chapter-title{
   font-family:var(--font-display); font-weight:600; font-size:clamp(1.5rem, 3vw, 2.1rem);
   margin:0 0 16px;
+  text-shadow:0 2px 16px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.65);
 }
-.chapter-story{color:var(--muted); font-size:15px; line-height:1.75;}
+.chapter-story{color:var(--star); font-size:15px; line-height:1.75; text-shadow:0 1px 10px rgba(0,0,0,0.4);}
 .chapter-story[contenteditable="true"]{outline:1px dashed var(--aqua-dim); border-radius:6px; padding:6px; background:rgba(63,224,197,0.04);}
 
 .chip-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px;}
@@ -219,6 +625,7 @@ a{color:var(--aqua);}
   display:none; align-items:center; justify-content:center; z-index:2;
 }
 .photo-slot.has-img .remove-btn{display:flex;}
+body.edit-mode .photo-slot .remove-btn{display:flex;}
 
 .add-slot-btn{
   margin-top:12px; font-family:var(--font-mono); font-size:11px; color:var(--muted);
@@ -315,10 +722,19 @@ html.is-owner .infobar.hidden{display:none;}
   box-shadow:0 6px 24px rgba(63,224,197,0.15); display:flex; align-items:center; justify-content:center;
 }
 .toolbar-main.active{background:var(--aqua); color:var(--void);}
-body.edit-mode [data-editable]{cursor:text;}
+body.edit-mode [data-key],
+body.edit-mode .chapter-story{position:relative; cursor:text;}
+body.edit-mode [data-key]:hover::after,
+body.edit-mode .chapter-story:hover::after{
+  content:"✎"; position:absolute; top:-9px; right:-9px; font-size:11px; color:var(--aqua);
+  background:rgba(6,11,19,0.75); border:1px solid var(--aqua-dim);
+  border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 6px rgba(0,0,0,0.35); pointer-events:none; z-index:3;
+}
 html:not(.is-owner) .photo-slot{cursor:default;}
 html:not(.is-owner) .photo-slot:hover{border-color:var(--card-line); transform:none;}
 html:not(.is-owner) .photo-slot .remove-btn{display:none !important;}
+html:not(.is-owner) .add-slot-btn{display:none !important;}
 body.edit-mode .photo-slot::after{
   content:"✎"; position:absolute; top:5px; left:5px; font-size:11px; color:var(--aqua);
   background:rgba(6,11,19,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; z-index:2;
@@ -329,6 +745,32 @@ body.edit-mode .photo-slot::after{
   padding:9px 18px; border-radius:20px; opacity:0; pointer-events:none; transition:all 0.35s ease;
 }
 .save-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* ============ PHOTO ZOOM (click-to-focus lightbox) ============ */
+body.lb-open{overflow:hidden;}
+.lb-backdrop{
+  position:fixed; inset:0; z-index:120;
+  background:rgba(4,8,14,0.8);
+  backdrop-filter:blur(18px) saturate(1.1); -webkit-backdrop-filter:blur(18px) saturate(1.1);
+  opacity:0; pointer-events:none; transition:opacity 0.4s ease;
+}
+.lb-backdrop.open{opacity:1; pointer-events:auto; cursor:zoom-out;}
+.lb-clone{
+  position:fixed; z-index:121; object-fit:cover;
+  box-shadow:0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.08);
+  pointer-events:none;
+  transition:top 0.45s cubic-bezier(.2,.8,.2,1), left 0.45s cubic-bezier(.2,.8,.2,1),
+             width 0.45s cubic-bezier(.2,.8,.2,1), height 0.45s cubic-bezier(.2,.8,.2,1),
+             border-radius 0.45s ease;
+  display:none;
+}
+.lb-clone.show{display:block;}
+@media (prefers-reduced-motion: reduce){
+  .lb-backdrop, .lb-clone{transition-duration:0.001ms !important;}
+}
+html:not(.is-owner) .photo-slot.has-img,
+html.is-owner .photo-slot.has-img{cursor:zoom-in;}
+body.edit-mode .photo-slot.has-img{cursor:pointer;}
 
 /* ============ RESPONSIVE ============ */
 @media (max-width:820px){
@@ -348,6 +790,51 @@ body.edit-mode .photo-slot::after{
 <body>
 
 <canvas id="bgCanvas"></canvas>
+<div class="aurora"><span></span><span></span><span></span></div>
+<div class="px-scene" id="pxScene" aria-hidden="true">
+  <div id="pxLayers">
+    <div class="px-layer" id="pxSky" data-depth="0.05" data-mouse="4"><div class="px-layer-drift"><img src="assets/background/sky.webp" alt=""><div class="px-fx" id="pxSkyFx"></div></div></div>
+    <div class="px-layer" id="pxMountains" data-depth="0.14" data-mouse="8"><div class="px-layer-drift"><img src="assets/background/mountains.webp" alt=""><div class="px-fx" id="pxMountainsFx"></div></div></div>
+    <div class="px-layer" id="pxForest" data-depth="0.26" data-mouse="14"><div class="px-layer-drift"><img src="assets/background/forest.webp" alt=""><div class="px-fx" id="pxForestFx"></div></div></div>
+    <div class="px-layer" id="pxHouse" data-depth="0.36" data-mouse="20"><div class="px-layer-drift"><img src="assets/background/house.webp" alt=""><div class="px-fx" id="pxHouseFx"></div></div></div>
+    <div class="px-layer px-school-layer" id="pxTK" data-depth="0.40" data-mouse="22">
+      <div class="px-layer-drift">
+        <div class="px-school-bg"></div>
+        <img class="px-school-building" src="assets/school/tk-building.png" alt="TK Istiqomah Sambas">
+        <img class="px-school-characters" src="assets/school/tk-characters.png" alt="">
+        <div class="px-fx" id="pxTKFx"></div>
+      </div>
+    </div>
+    <div class="px-layer px-school-layer" id="pxSD" data-depth="0.42" data-mouse="24">
+      <div class="px-layer-drift">
+        <div class="px-school-bg"></div>
+        <img class="px-school-building" src="assets/school/sd-building.png" alt="SDIT Alam Harapan Ummat">
+        <img class="px-school-characters" src="assets/school/sd-characters.png" alt="">
+        <div class="px-fx" id="pxSDFx"></div>
+      </div>
+    </div>
+    <div class="px-layer px-school-layer" id="pxSMP" data-depth="0.44" data-mouse="26">
+      <div class="px-layer-drift">
+        <div class="px-school-bg"></div>
+        <img class="px-school-building" src="assets/school/smp-building.png" alt="SMP Istiqomah Sambas">
+        <img class="px-school-characters" src="assets/school/smp-characters.png" alt="">
+        <div class="px-fx" id="pxSMPFx"></div>
+      </div>
+    </div>
+    <div class="px-layer px-school-layer" id="pxSMA" data-depth="0.46" data-mouse="28">
+      <div class="px-layer-drift">
+        <div class="px-school-bg"></div>
+        <img class="px-school-building" src="assets/school/sma-building.png" alt="MA Sunan Pandanaran">
+        <img class="px-school-characters" src="assets/school/sma-characters.png" alt="">
+        <div class="px-fx" id="pxSMAFx"></div>
+      </div>
+    </div>
+    <div class="px-layer" id="pxForeground" data-depth="0.5" data-mouse="30"><div class="px-layer-drift"><img src="assets/background/foreground.webp" alt=""><div class="px-fx" id="pxForegroundFx"></div></div></div>
+  </div>
+  <canvas id="pxFireflies"></canvas>
+  <div class="px-fade"></div>
+</div>
+<canvas id="sparkleCanvas"></canvas>
 <div class="grain"></div>
 
 <div class="wrap">
@@ -371,12 +858,16 @@ body.edit-mode .photo-slot::after{
   <section class="journey-track" id="journeyTrack">
     <div id="trackSvgWrap"></div>
     <div class="bubble-field" id="bubbleField"></div>
+    <div class="track-comet" id="trackComet" aria-hidden="true"></div>
 
     <!-- Chapter 0 -->
     <article class="chapter" data-chapter>
       <div class="chapter-node"></div>
       <div class="chapter-text">
-        <span class="chapter-label">2012 — 2014 · TK Istiqomah Sambas Purbalingga</span>
+        <div class="chapter-label-row">
+          <img class="chapter-logo" src="assets/logos/logo-istiqomah-sambas.png" alt="Logo TK Istiqomah Sambas" loading="lazy">
+          <span class="chapter-label">2012 — 2014 · TK Istiqomah Sambas Purbalingga</span>
+        </div>
         <h2 class="chapter-title">Langkah Pertama</h2>
         <p class="chapter-story" contenteditable="false" data-key="story-0">Sebelum semuanya dimulai, sempat merasakan sekolah singkat di balai desa sendiri. Tak lama, pindah ke TK/PAUD Istiqomah Sambas, Purbalingga — tempat pertama kali belajar duduk di kelas sungguhan. Masuk TK A tahun 2012, dan lulus TK B pada pertengahan 2014.</p>
         <div class="chip-row"><span class="chip">Sekolah pertama</span><span class="chip">Purbalingga</span></div>
@@ -395,7 +886,10 @@ body.edit-mode .photo-slot::after{
     <article class="chapter" data-chapter>
       <div class="chapter-node"></div>
       <div class="chapter-text">
-        <span class="chapter-label">2014 — 2020 · SDIT Alam Harapan Ummat Purbalingga</span>
+        <div class="chapter-label-row">
+          <img class="chapter-logo" src="assets/logos/logo-sdit-ahu.png" alt="Logo SDIT Alam Harapan Ummat" loading="lazy">
+          <span class="chapter-label">2014 — 2020 · SDIT Alam Harapan Ummat Purbalingga</span>
+        </div>
         <h2 class="chapter-title">Angkatan Takhossus</h2>
         <p class="chapter-story" contenteditable="false" data-key="story-1">Masuk ke kelas takhossus — satu-satunya kelas yang isinya sama selama 6 tahun penuh tanpa pernah ganti teman. Awalnya 32 anak (12 laki-laki, 20 perempuan), lalu jadi 10 anak laki-laki yang solid banget sejak kelas 3. Kelas paling sering juara lomba tarik tambang, aktif ikut lomba roket air, dan pernah ikut seleksi OSN Matematika. Sempat menghafal Juz 30, 29, dan 28. Angkatan ke-7, dan jadi generasi corona pertama yang tidak merasakan Ujian Nasional.</p>
         <div class="chip-row"><span class="chip">Angkatan 7</span><span class="chip">🥇 Tarik tambang</span><span class="chip">🚀 Roket air</span><span class="chip">Hafalan Juz 28–30</span></div>
@@ -414,7 +908,10 @@ body.edit-mode .photo-slot::after{
     <article class="chapter" data-chapter>
       <div class="chapter-node"></div>
       <div class="chapter-text">
-        <span class="chapter-label">2020 — 2023 · SMP Istiqomah Sambas Purbalingga</span>
+        <div class="chapter-label-row">
+          <img class="chapter-logo" src="assets/logos/logo-istiqomah-sambas.png" alt="Logo SMP Istiqomah Sambas" loading="lazy">
+          <span class="chapter-label">2020 — 2023 · SMP Istiqomah Sambas Purbalingga</span>
+        </div>
         <h2 class="chapter-title">Belajar di Tengah Pandemi</h2>
         <p class="chapter-story" contenteditable="false" data-key="story-2">Masuk tepat saat pandemi baru mulai — kelas 1 penuh daring, kelas 2 sistem 50:50, baru kelas 3 masuk sekolah sepenuhnya. Ikut ekskul Sains, dan meski tak pernah ikut organisasi apa pun, selalu jadi yang paling rajin bersih-bersih kelas sepulang sekolah, sampai suka telat dijemput. Tiga tahun berturut-turut selalu kebagian kelas laki-laki penuh yang kompak banget. Angkatan ke-16.</p>
         <div class="chip-row"><span class="chip">Angkatan 16</span><span class="chip">Ekskul Sains</span><span class="chip">Masa daring</span></div>
@@ -433,7 +930,10 @@ body.edit-mode .photo-slot::after{
     <article class="chapter" data-chapter>
       <div class="chapter-node"></div>
       <div class="chapter-text">
-        <span class="chapter-label">2023 — 2026 · MA Sunan Pandanaran, Sleman, DIY</span>
+        <div class="chapter-label-row">
+          <img class="chapter-logo" src="assets/logos/logo-maspa.png" alt="Logo MA Sunan Pandanaran (MASPA)" loading="lazy">
+          <span class="chapter-label">2023 — 2026 · MA Sunan Pandanaran, Sleman, DIY</span>
+        </div>
         <h2 class="chapter-title">Golden Age — Merantau ke Yogyakarta</h2>
         <p class="chapter-story" contenteditable="false" data-key="story-3">Memberanikan diri merantau dan mondok di Pondok Pesantren Sunan Pandanaran, sekolah di Madrasah Aliyah di bawah yayasan yang sama. Angkatan ke-37, bernama GHAXORIST dengan maskot zebra. Tahun pertama masih adaptasi dengan kehidupan asrama; tahun kedua mulai mengabdi sebagai Humas merangkap Takmir — titik awal berani bicara di depan umum. Dipercaya menjadi Ketua Divisi Keagamaan HTT (OSIS) 2025/2026, Bendahara PMR Wira 2025/2026, Ketua Acara Idul Adha Pondok 2025, dan panitia Haflah Khotmil Qur'an ke-52 tahun 2026. Di kelas 3, masuk jajaran siswa eligible TKA di peringkat 83, dan memantapkan satu pilihan: Akuakultur UGM. Dibimbing oleh pengasuh pondok, Bapak Mutasim Billah. Kelulusan dari pondok terasa paling mengharukan dari semuanya — tiga tahun 24 jam bersama teman-teman seperjuangan.</p>
         <div class="chip-row"><span class="chip">Angkatan 37 — GHAXORIST 🦓</span><span class="chip">TKA eligible #83</span><span class="chip">Humas + Takmir</span></div>
@@ -452,7 +952,10 @@ body.edit-mode .photo-slot::after{
     <article class="chapter" data-chapter>
       <div class="chapter-node"></div>
       <div class="chapter-text">
-        <span class="chapter-label">2026 — sekarang · Universitas Gadjah Mada, Akuakultur</span>
+        <div class="chapter-label-row">
+          <img class="chapter-logo chapter-logo-ugm" src="assets/logos/logo-ugm.png" alt="Logo Universitas Gadjah Mada" loading="lazy">
+          <span class="chapter-label">2026 — sekarang · Universitas Gadjah Mada, Akuakultur</span>
+        </div>
         <h2 class="chapter-title">Menuju Muara — UGM Akuakultur</h2>
         <p class="chapter-story" contenteditable="false" data-key="story-4">Lolos ke UGM lewat jalur SNBP, mengambil program studi Akuakultur, Fakultas Perikanan. Babak mahasiswa baru baru saja dimulai — cerita PKKMB, kehidupan kampus, dan teman-teman baru akan menyusul di sini seiring waktu berjalan.</p>
         <div class="chip-row"><span class="chip">Jalur SNBP</span><span class="chip">Akuakultur</span><span class="chip">✨ Coming soon</span></div>
@@ -589,6 +1092,17 @@ body.edit-mode .photo-slot::after{
 </div>
 <div class="save-toast" id="saveToast">Tersimpan ✓</div>
 
+<!-- ================= ZEBRA 3D MASCOT ================= -->
+<div id="zebraWidget">
+  <div id="zebraBubble">Halo, aku maskot GHAXORIST 🦓 — coba gerakin kursormu!</div>
+  <canvas id="zebraCanvas" width="180" height="180"></canvas>
+</div>
+
+<div class="lb-backdrop" id="lbBackdrop" aria-hidden="true"></div>
+<img class="lb-clone" id="lbClone" src="" alt="" aria-hidden="true">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

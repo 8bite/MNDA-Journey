@@ -332,11 +332,11 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
      ubah logic di bawah).
   =================================================================== */
   var TUNE = {
-    lookYawSensitivity: 0.62,
-    lookPitchSensitivity: 0.30,
-    headExtraYaw: 0.45,
-    headExtraPitch: 0.35,
-    followSmoothing: 0.09,
+    lookYawSensitivity: 0.95,
+    lookPitchSensitivity: 0.55,
+    headExtraYaw: 0.55,
+    headExtraPitch: 0.5,
+    followSmoothing: 0.16,
     idleTimeoutMs: 2600,
     grazeDip: 0.5,
     grazeCycleSeconds: 6.5,
@@ -575,7 +575,7 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
       var graze = grazingOffsets(t);
 
       var wantYaw = (targetNX * TUNE.lookYawSensitivity) * alertBlend + graze.yaw * (1 - alertBlend);
-      var wantPitch = (-targetNY * TUNE.lookPitchSensitivity) * alertBlend + graze.pitch * (1 - alertBlend);
+      var wantPitch = (targetNY * TUNE.lookPitchSensitivity) * alertBlend + graze.pitch * (1 - alertBlend);
 
       curYaw += (wantYaw - curYaw) * TUNE.followSmoothing;
       curPitch += (wantPitch - curPitch) * TUNE.followSmoothing;

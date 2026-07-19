@@ -1641,6 +1641,436 @@ if (editBtn) {
 loadEditableText();
 
 /* ============================================================
+   6b. FLOATING TEXT-FORMAT TOOLBAR
+   Muncul otomatis di dekat teks yang lagi diklik/fokus saat Mode Edit
+   aktif. Owner bisa ganti jenis font, ukuran, warna, dan perataan —
+   tersimpan per elemen (per data-key) di localStorage lewat prefix
+   "myjourney_style_", jadi ikut kebawa saat export/import juga.
+============================================================ */
+var __applyAllSavedStyles = function () {};
+(function () {
+  var FONT_OPTIONS = [
+    { label: "Font default", value: "" },
+    { label: "Display (tebal)", value: "var(--font-display)" },
+    { label: "Aksen (serif miring)", value: "var(--font-accent)" },
+    { label: "Mono", value: "var(--font-mono)" },
+    { label: "Georgia", value: "Georgia, 'Times New Roman', serif" },
+    { label: "Arial", value: "Arial, Helvetica, sans-serif" },
+    { label: "Courier", value: "'Courier New', monospace" }
+  ];
+
+  var bar = document.createElement("div");
+  bar.className = "fmt-toolbar";
+  bar.innerHTML =
+    '<select class="fmt-font" title="Jenis font"></select>' +
+    '<input class="fmt-size" type="number" min="9" max="120" step="1" title="Ukuran (px)">' +
+    '<input class="fmt-color" type="color" title="Warna teks">' +
+    '<button type="button" class="fmt-align" data-align="left" title="Rata kiri">◀</button>' +
+    '<button type="button" class="fmt-align" data-align="center" title="Rata tengah">▬</button>' +
+    '<button type="button" class="fmt-align" data-align="right" title="Rata kanan">▶</button>' +
+    '<button type="button" class="fmt-reset" title="Reset format">↺</button>';
+  document.body.appendChild(bar);
+
+  var fontSel = bar.querySelector(".fmt-font");
+  FONT_OPTIONS.forEach(function (f) {
+    var o = document.createElement("option");
+    o.value = f.value; o.textContent = f.label;
+    fontSel.appendChild(o);
+  });
+  var sizeInput = bar.querySelector(".fmt-size");
+  var colorInput = bar.querySelector(".fmt-color");
+  var alignBtns = Array.prototype.slice.call(bar.querySelectorAll(".fmt-align"));
+  var resetBtn = bar.querySelector(".fmt-reset");
+  var currentEl = null;
+
+  function loadStyle(key) {
+    try {
+      var raw = localStorage.getItem(PREFIX + "style_" + key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  function saveStyle(key, style) {
+    try { localStorage.setItem(PREFIX + "style_" + key, JSON.stringify(style)); } catch (e) {}
+  }
+  function applyStyle(el, style) {
+    el.style.fontFamily = style.font || "";
+    el.style.fontSize = style.size ? style.size + "px" : "";
+    el.style.color = style.color || "";
+    el.style.textAlign = style.align || "";
+  }
+  __applyAllSavedStyles = function () {
+    document.querySelectorAll("[data-key]").forEach(function (el) {
+      var key = el.getAttribute("data-key");
+      var style = loadStyle(key);
+      if (style) applyStyle(el, style);
+    });
+  };
+
+  function rgbToHex(rgb) {
+    var m = rgb && rgb.match(/\d+/g);
+    if (!m) return "#eef3f5";
+    return "#" + m.slice(0, 3).map(function (n) { return ("0" + parseInt(n, 10).toString(16)).slice(-2); }).join("");
+  }
+
+  function positionBar(el) {
+    var r = el.getBoundingClientRect();
+    var bh = bar.offsetHeight || 42, bw = bar.offsetWidth || 260;
+    var top = r.top - bh - 10;
+    if (top < 8) top = r.bottom + 10;
+    var left = Math.min(Math.max(8, r.left), window.innerWidth - bw - 8);
+    bar.style.top = (top + window.scrollY) + "px";
+    bar.style.left = (left + window.scrollX) + "px";
+  }
+
+  function showBar(el) {
+    currentEl = el;
+    var key = el.getAttribute("data-key");
+    var style = loadStyle(key) || {};
+    fontSel.value = style.font || "";
+    sizeInput.value = style.size || Math.round(parseFloat(getComputedStyle(el).fontSize)) || "";
+    colorInput.value = style.color || rgbToHex(getComputedStyle(el).color);
+    alignBtns.forEach(function (b) { b.classList.toggle("active", (style.align || "") === b.getAttribute("data-align")); });
+    bar.classList.add("show");
+    positionBar(el);
+  }
+  function hideBar() { bar.classList.remove("show"); currentEl = null; }
+
+  function updateCurrent(partial) {
+    if (!currentEl) return;
+    var key = currentEl.getAttribute("data-key");
+    if (!key) return;
+    var style = loadStyle(key) || {};
+    Object.keys(partial).forEach(function (k) { style[k] = partial[k]; });
+    saveStyle(key, style);
+    applyStyle(currentEl, style);
+    showToast("Format tersimpan ✓");
+  }
+
+  fontSel.addEventListener("change", function () { updateCurrent({ font: fontSel.value }); });
+  sizeInput.addEventListener("input", function () { updateCurrent({ size: sizeInput.value ? parseInt(sizeInput.value, 10) : "" }); });
+  colorInput.addEventListener("input", function () { updateCurrent({ color: colorInput.value }); });
+  alignBtns.forEach(function (b) {
+    b.addEventListener("click", function () {
+      var a = b.getAttribute("data-align");
+      var wasActive = b.classList.contains("active");
+      alignBtns.forEach(function (x) { x.classList.remove("active"); });
+      if (!wasActive) b.classList.add("active");
+      updateCurrent({ align: wasActive ? "" : a });
+    });
+  });
+  resetBtn.addEventListener("click", function () {
+    if (!currentEl) return;
+    var key = currentEl.getAttribute("data-key");
+    try { localStorage.removeItem(PREFIX + "style_" + key); } catch (e) {}
+    applyStyle(currentEl, {});
+    showBar(currentEl);
+    showToast("Format direset");
+  });
+
+  // klik/interaksi di dalam toolbar tidak boleh membuang fokus dari teks yang sedang diedit
+  bar.addEventListener("mousedown", function (e) {
+    if (e.target === sizeInput || e.target === colorInput || e.target === fontSel) return;
+    e.preventDefault();
+  });
+
+  document.addEventListener("focusin", function (e) {
+    if (!document.body.classList.contains("edit-mode")) return;
+    var el = e.target.closest && e.target.closest("[data-key]");
+    if (!el || el.getAttribute("contenteditable") !== "true") return;
+    showBar(el);
+  });
+  document.addEventListener("focusout", function () {
+    setTimeout(function () {
+      var active = document.activeElement;
+      if (bar.contains(active)) return;
+      if (active && active.hasAttribute && active.hasAttribute("data-key")) return;
+      hideBar();
+    }, 130);
+  });
+  document.addEventListener("click", function (e) {
+    if (!document.body.classList.contains("edit-mode")) return;
+    if (bar.contains(e.target)) return;
+    if (e.target.closest && e.target.closest("[data-key]")) return;
+    hideBar();
+  });
+  window.addEventListener("scroll", function () { if (currentEl) positionBar(currentEl); }, { passive: true });
+  window.addEventListener("resize", function () { if (currentEl) positionBar(currentEl); });
+
+  if (editBtn) {
+    editBtn.addEventListener("click", function () {
+      if (!document.body.classList.contains("edit-mode")) hideBar();
+    });
+  }
+
+  __applyAllSavedStyles();
+})();
+
+/* ============================================================
+   6c. AUTO-EDITABLE HEADINGS (hero, judul & deskripsi tiap section)
+   Supaya "segala teks" bisa diedit + diformat walau bukan bagian dari
+   kartu/daftar yang bisa ditambah-kurang.
+============================================================ */
+(function () {
+  var SELECTORS = [".hero-name", ".hero-sub", ".hero-meta", ".hero-nick > span:not(.dot)", ".section-eyebrow", ".section-title", ".section-desc"];
+  SELECTORS.forEach(function (sel) {
+    var slug = sel.replace(/[^a-z0-9]+/gi, "");
+    Array.prototype.slice.call(document.querySelectorAll(sel)).forEach(function (el, i) {
+      if (el.hasAttribute("data-key")) return;
+      el.setAttribute("data-key", "auto-" + slug + "-" + i);
+      el.setAttribute("contenteditable", document.body.classList.contains("edit-mode") ? "true" : "false");
+    });
+  });
+  loadEditableText();
+  __applyAllSavedStyles();
+})();
+
+/* ============================================================
+   6d. GENERIC "+ tambah" / "× hapus" UNTUK SETIAP KARTU & DAFTAR
+   Dipakai di Organisasi, Prestasi, Project, Tentang Aku, Goals, Kontak.
+   Pakai ulang mekanisme deletedSlots/markSlotDeleted yang sama dengan
+   slot foto, jadi semuanya ikut tersimpan & ter-export bersamaan.
+============================================================ */
+function elFromHTML(html) {
+  var d = document.createElement("div");
+  d.innerHTML = html.trim();
+  return d.firstElementChild;
+}
+function autoTagItemText(item, itemId, textMap) {
+  Object.keys(textMap).forEach(function (sel) {
+    var el = item.querySelector(sel);
+    if (!el || el.hasAttribute("data-key")) return;
+    el.setAttribute("data-key", itemId + "-" + textMap[sel]);
+    el.setAttribute("contenteditable", document.body.classList.contains("edit-mode") ? "true" : "false");
+  });
+}
+function addItemRemoveBtn(item, itemId) {
+  if (item.querySelector(".item-remove-btn")) return;
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "item-remove-btn";
+  btn.title = "Hapus item ini";
+  btn.textContent = "×";
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation(); e.preventDefault();
+    if (!confirm("Hapus item ini?")) return;
+    markSlotDeleted(itemId);
+    item.style.transition = "opacity .2s ease, transform .2s ease";
+    item.style.opacity = "0";
+    item.style.transform = "scale(0.92)";
+    setTimeout(function () { item.remove(); }, 200);
+    showToast("Item dihapus");
+  });
+  item.appendChild(btn);
+}
+function wireDynamicGroup(opts) {
+  var container = opts.container;
+  if (!container) return;
+
+  function setupItem(item, itemId) {
+    if (isSlotDeleted(itemId)) { item.remove(); return; }
+    item.setAttribute("data-item-id", itemId);
+    autoTagItemText(item, itemId, opts.textMap);
+    addItemRemoveBtn(item, itemId);
+    if (opts.onSetup) opts.onSetup(item, itemId);
+  }
+
+  var existing = Array.prototype.slice.call(container.children).filter(function (el) {
+    return el.matches && el.matches(opts.itemSelector);
+  });
+  existing.forEach(function (item, i) {
+    setupItem(item, opts.groupKey + "-" + (i + 1));
+  });
+
+  var countKey = PREFIX + "extra_" + opts.groupKey;
+  var extraCount = 0;
+  try { extraCount = parseInt(localStorage.getItem(countKey) || "0", 10); } catch (e) {}
+  for (var i = 1; i <= extraCount; i++) {
+    var restoredId = opts.groupKey + "-extra-" + i;
+    if (isSlotDeleted(restoredId)) continue;
+    var restoredEl = opts.makeTemplate(restoredId);
+    container.appendChild(restoredEl);
+    setupItem(restoredEl, restoredId);
+  }
+
+  loadEditableText();
+  __applyAllSavedStyles();
+
+  if (opts.addBtnLabel && !container.parentNode.querySelector('.add-item-wrap[data-for="' + opts.groupKey + '"]')) {
+    var wrap = document.createElement("div");
+    wrap.className = "add-item-wrap";
+    wrap.setAttribute("data-for", opts.groupKey);
+    var addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "add-slot-btn add-item-btn";
+    addBtn.textContent = opts.addBtnLabel;
+    addBtn.addEventListener("click", function () {
+      if (!document.documentElement.classList.contains("is-owner")) return;
+      var n = 0;
+      try { n = parseInt(localStorage.getItem(countKey) || "0", 10); } catch (e) {}
+      n++;
+      try { localStorage.setItem(countKey, String(n)); } catch (e) {}
+      var newId = opts.groupKey + "-extra-" + n;
+      var newEl = opts.makeTemplate(newId);
+      container.appendChild(newEl);
+      setupItem(newEl, newId);
+      loadEditableText();
+      __applyAllSavedStyles();
+      newEl.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+      showToast("Item ditambahkan ✓");
+    });
+    wrap.appendChild(addBtn);
+    container.insertAdjacentElement("afterend", wrap);
+  }
+}
+
+/* ---- Organisasi & Amanah ---- */
+wireDynamicGroup({
+  container: document.querySelector("#organisasi .grid-cards"),
+  itemSelector: ".card",
+  groupKey: "org",
+  textMap: { ".card-icon": "icon", ".card-tag": "tag", ".card-title": "title", ".card-desc": "desc" },
+  addBtnLabel: "+ tambah kartu",
+  makeTemplate: function (id) {
+    return elFromHTML(
+      '<div class="card"><span class="card-icon" contenteditable="false">✨</span>' +
+      '<span class="card-tag" contenteditable="false">Tahun</span>' +
+      '<h3 class="card-title" contenteditable="false">Amanah baru</h3>' +
+      '<p class="card-desc" contenteditable="false">Tulis deskripsi singkat di sini...</p></div>'
+    );
+  }
+});
+
+/* ---- Prestasi & Momen Berkesan ---- */
+wireDynamicGroup({
+  container: document.querySelector("#prestasi .grid-cards"),
+  itemSelector: ".card",
+  groupKey: "prestasi",
+  textMap: { ".card-icon": "icon", ".card-title": "title", ".card-desc": "desc" },
+  addBtnLabel: "+ tambah prestasi",
+  makeTemplate: function (id) {
+    return elFromHTML(
+      '<div class="card"><span class="card-icon" contenteditable="false">🏅</span>' +
+      '<h3 class="card-title" contenteditable="false">Momen baru</h3>' +
+      '<p class="card-desc" contenteditable="false">Tulis ceritanya di sini...</p></div>'
+    );
+  }
+});
+
+/* ---- Tentang Aku ---- */
+wireDynamicGroup({
+  container: document.querySelector(".about-grid"),
+  itemSelector: ".about-item",
+  groupKey: "about",
+  // h4 pada item statis belum punya key -> otomatis ditandai; p pada item
+  // statis SUDAH punya data-key manual (about-hobi, dst) jadi dilewati,
+  // sementara p pada item baru (belum ada key) ikut ditandai lewat "body".
+  textMap: { "h4": "h4", "p": "body" },
+  addBtnLabel: "+ tambah info",
+  makeTemplate: function (id) {
+    return elFromHTML(
+      '<div class="about-item"><h4 contenteditable="false">Judul baru</h4>' +
+      '<p contenteditable="false" class="placeholder-text">Tulis di sini...</p></div>'
+    );
+  }
+});
+
+/* ---- Peta Masa Depan (Goals) ---- */
+wireDynamicGroup({
+  container: document.querySelector(".goal-list"),
+  itemSelector: ".goal-item",
+  groupKey: "goalitem",
+  textMap: { "span:not(.goal-dot)": "text" },
+  addBtnLabel: "+ tambah goal",
+  makeTemplate: function (id) {
+    return elFromHTML('<div class="goal-item"><span class="goal-dot"></span><span contenteditable="false">Tulis target baru...</span></div>');
+  }
+});
+
+/* ---- Kontak ---- */
+wireDynamicGroup({
+  container: document.querySelector(".contact-grid"),
+  itemSelector: ".contact-pill",
+  groupKey: "contactpill",
+  textMap: { ".cp-label": "label", ".cp-label + span": "value" },
+  addBtnLabel: "+ tambah kontak",
+  makeTemplate: function (id) {
+    return elFromHTML(
+      '<div class="contact-pill">🔗 <span><span class="cp-label" contenteditable="false">Label</span>' +
+      '<span contenteditable="false">akunmu</span></span></div>'
+    );
+  }
+});
+
+/* ---- Project & Portofolio (pakai ulang array `projects` + wireSlot foto) ---- */
+(function () {
+  if (!projectGrid) return;
+  projects.forEach(function (p, i) {
+    var card = projectGrid.children[i];
+    if (!card) return;
+    var itemId = "project-" + p.id;
+    card.setAttribute("data-item-id", itemId);
+    autoTagItemText(card, itemId, { ".card-icon": "icon", ".card-title": "title" });
+    addItemRemoveBtn(card, itemId);
+  });
+  loadEditableText();
+  __applyAllSavedStyles();
+
+  if (!projectGrid.parentNode.querySelector('.add-item-wrap[data-for="project"]')) {
+    var wrap = document.createElement("div");
+    wrap.className = "add-item-wrap";
+    wrap.setAttribute("data-for", "project");
+    var addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "add-slot-btn add-item-btn";
+    addBtn.textContent = "+ tambah project";
+    var countKey = PREFIX + "extra_project";
+
+    function buildProjectCard(id) {
+      var card = elFromHTML(
+        '<div class="card project-card"><span class="card-icon" contenteditable="false">🧩</span>' +
+        '<h3 class="card-title" contenteditable="false">Project baru</h3>' +
+        '<p class="card-desc" contenteditable="false" data-key="' + id + '-desc">Deskripsi singkat project...</p>' +
+        '<div class="photo-grid" data-group="' + id + '">' +
+        '  <div class="photo-slot" data-slot="' + id + '-logo"><span class="ph-icon">+</span><span class="ph-label">Logo</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>' +
+        '  <div class="photo-slot" data-slot="' + id + '-shot"><span class="ph-icon">+</span><span class="ph-label">Screenshot</span><input type="file" accept="image/*"><button class="remove-btn" type="button">×</button></div>' +
+        '</div></div>'
+      );
+      autoTagItemText(card, id, { ".card-icon": "icon", ".card-title": "title" });
+      addItemRemoveBtn(card, id);
+      card.querySelectorAll(".photo-slot").forEach(wireSlot);
+      return card;
+    }
+
+    var extraCount = 0;
+    try { extraCount = parseInt(localStorage.getItem(countKey) || "0", 10); } catch (e) {}
+    for (var i = 1; i <= extraCount; i++) {
+      var rid = "project-extra-" + i;
+      if (isSlotDeleted(rid)) continue;
+      projectGrid.appendChild(buildProjectCard(rid));
+    }
+    loadEditableText();
+    __applyAllSavedStyles();
+
+    addBtn.addEventListener("click", function () {
+      if (!document.documentElement.classList.contains("is-owner")) return;
+      var n = 0;
+      try { n = parseInt(localStorage.getItem(countKey) || "0", 10); } catch (e) {}
+      n++;
+      try { localStorage.setItem(countKey, String(n)); } catch (e) {}
+      var newId = "project-extra-" + n;
+      var card = buildProjectCard(newId);
+      projectGrid.appendChild(card);
+      loadEditableText();
+      __applyAllSavedStyles();
+      card.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+      showToast("Project ditambahkan ✓");
+    });
+    wrap.appendChild(addBtn);
+    projectGrid.insertAdjacentElement("afterend", wrap);
+  }
+})();
+
+/* ============================================================
    7. EXPORT / IMPORT / RESET
 ============================================================ */
 var btnExport = document.getElementById("btnExport");

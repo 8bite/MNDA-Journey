@@ -735,6 +735,44 @@ html:not(.is-owner) .photo-slot{cursor:default;}
 html:not(.is-owner) .photo-slot:hover{border-color:var(--card-line); transform:none;}
 html:not(.is-owner) .photo-slot .remove-btn{display:none !important;}
 html:not(.is-owner) .add-slot-btn{display:none !important;}
+
+/* ============ GENERIC + / × FOR CARDS & LIST ITEMS ============ */
+.card, .about-item, .goal-item, .contact-pill{position:relative;}
+.item-remove-btn{
+  position:absolute; top:-8px; right:-8px; width:22px; height:22px; border-radius:50%;
+  background:rgba(6,11,19,0.92); color:var(--star); border:1px solid var(--card-line);
+  font-size:13px; line-height:1; cursor:pointer; align-items:center; justify-content:center;
+  display:none; z-index:4; box-shadow:0 4px 12px rgba(0,0,0,0.4);
+}
+.item-remove-btn:hover{border-color:rgba(224,87,87,0.6); color:#ff8f8f;}
+body.edit-mode .item-remove-btn{display:flex;}
+html:not(.is-owner) .item-remove-btn{display:none !important;}
+.add-item-wrap{text-align:center; margin-top:18px;}
+
+/* ============ FLOATING TEXT-FORMAT TOOLBAR ============ */
+.fmt-toolbar{
+  position:absolute; z-index:60; display:none; align-items:center; gap:6px; flex-wrap:wrap;
+  max-width:min(360px, 88vw);
+  background:var(--card); border:1px solid var(--aqua-dim); border-radius:12px;
+  padding:8px 9px; box-shadow:0 10px 34px rgba(0,0,0,0.5);
+  font-family:var(--font-mono); font-size:11px; color:var(--star);
+}
+.fmt-toolbar.show{display:flex;}
+.fmt-toolbar select, .fmt-toolbar input[type="number"]{
+  background:var(--deep-2); border:1px solid var(--card-line); color:var(--star);
+  border-radius:6px; font-family:var(--font-mono); font-size:11px; padding:5px 6px;
+}
+.fmt-toolbar select{max-width:118px;}
+.fmt-toolbar input[type="number"]{width:50px;}
+.fmt-toolbar input[type="color"]{width:26px; height:26px; padding:0; border:none; border-radius:6px; background:none; cursor:pointer;}
+.fmt-toolbar button{
+  background:var(--deep-2); border:1px solid var(--card-line); color:var(--star);
+  border-radius:6px; width:26px; height:26px; cursor:pointer; font-size:12px;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.fmt-toolbar button.active{background:var(--aqua); color:var(--void); border-color:var(--aqua);}
+.fmt-toolbar button:hover{border-color:var(--aqua-dim);}
+html:not(.is-owner) .fmt-toolbar{display:none !important;}
 body.edit-mode .photo-slot::after{
   content:"✎"; position:absolute; top:5px; left:5px; font-size:11px; color:var(--aqua);
   background:rgba(6,11,19,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; z-index:2;

@@ -402,18 +402,36 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
     scene.add(ring);
   }
 
-  /* ---------- speech bubble, shown once ---------- */
-  var ZKEY = "myjourney_zebra_intro_seen";
-  var seen = false;
-  try { seen = localStorage.getItem(ZKEY) === "1"; } catch (e) {}
-  if (!seen && bubble) {
-    setTimeout(function () { bubble.classList.add("show"); }, 1400);
-    setTimeout(function () {
+  /* ---------- speech bubble: recurring quotes every ~5s ---------- */
+  var ZEBRA_QUOTES = [
+    "Halo, aku maskot GHAXORIST 🦓 — coba gerakin kursormu!",
+    "Psst, aku bisa diputar juga lho, coba drag aku 🔄",
+    "Cerita ini seru banget, scroll terus yuk!",
+    "Aku nemenin kamu baca journey ini sampai habis 💫",
+    "Eh coba deh, aku bisa nengok ke arah kursormu!",
+    "Semangat baca sampai selesai ya~",
+    "Zebra kesepian di pojok, temenin dong 🥺",
+    "Yuk lanjut scroll, masih banyak cerita lagi!"
+  ];
+  var zebraQuoteIdx = 0;
+  var zebraBubbleHideTimer = null;
+
+  function showZebraQuote() {
+    if (!bubble) return;
+    bubble.textContent = ZEBRA_QUOTES[zebraQuoteIdx % ZEBRA_QUOTES.length];
+    zebraQuoteIdx++;
+    bubble.classList.add("show");
+    clearTimeout(zebraBubbleHideTimer);
+    zebraBubbleHideTimer = setTimeout(function () {
       bubble.classList.remove("show");
-      try { localStorage.setItem(ZKEY, "1"); } catch (e) {}
-    }, 6000);
-  } else if (bubble) {
-    bubble.style.display = "none";
+    }, 3600);
+  }
+
+  if (bubble) {
+    setTimeout(function () {
+      showZebraQuote();
+      setInterval(showZebraQuote, 5000);
+    }, 1400);
   }
 
   /* ---------- cursor tracking (whole-page coordinates) ---------- */

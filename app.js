@@ -468,6 +468,7 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
   var restTail = { x: 0, y: 0, z: 0 };
 
   var curYaw = 0, curPitch = 0;
+  var localYawVecX = 1, localYawVecY = 0; // vector-smoothed yaw (avoids +-pi snap)
   var groundY = 0;
 
   function onModelLoaded(gltf) {
@@ -558,13 +559,6 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
     return { pitch: dip * TUNE.grazeDip, yaw: swayY };
   }
 
-  function wrapAngle(a) {
-    a = a % (Math.PI * 2);
-    if (a > Math.PI) a -= Math.PI * 2;
-    if (a < -Math.PI) a += Math.PI * 2;
-    return a;
-  }
-
   function animate() {
     requestAnimationFrame(animate);
     var t = clock.getElapsedTime();
@@ -593,7 +587,22 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
       // rotation has to subtract the body's current yaw — otherwise once
       // the body is turned, "left" in local bone space no longer matches
       // "left" on screen and the head appears to track backwards.
-      var localYaw = wrapAngle(curYaw - bodyYawCur);
+      // curYaw is the desired yaw in world/screen space (based on where the
+      // mouse actually is). The neck/head bones are children of the body
+      // (root), which itself can be spun by drag-to-rotate, so their local
+      // rotation has to subtract the body's current yaw — otherwise once
+      // the body is turned, "left" in local bone space no longer matches
+      // "left" on screen. That subtraction is smoothed as a unit vector
+      // (cos/sin) rather than a raw angle, because a raw angle wraps at
+      // +-180deg and snaps instantly there; the vector form has no such
+      // seam, so the head turns smoothly even when the body is facing
+      // almost straight at (or away from) the camera.
+      var targetYawVecX = Math.cos(curYaw - bodyYawCur);
+      var targetYawVecY = Math.sin(curYaw - bodyYawCur);
+      localYawVecX += (targetYawVecX - localYawVecX) * TUNE.followSmoothing;
+      localYawVecY += (targetYawVecY - localYawVecY) * TUNE.followSmoothing;
+
+      var localYaw = Math.atan2(localYawVecY, localYawVecX);
       localYaw = Math.max(-1.3, Math.min(1.3, localYaw));
 
       neckBone.rotation.y = restNeck.y + localYaw * (1 - TUNE.headExtraYaw);

@@ -580,10 +580,19 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
       curYaw += (wantYaw - curYaw) * TUNE.followSmoothing;
       curPitch += (wantPitch - curPitch) * TUNE.followSmoothing;
 
-      neckBone.rotation.y = restNeck.y + curYaw * (1 - TUNE.headExtraYaw);
+      // curYaw is the desired yaw in world/screen space (based on where the
+      // mouse actually is). The neck/head bones are children of the body
+      // (root), which itself can be spun by drag-to-rotate, so their local
+      // rotation has to subtract the body's current yaw — otherwise once
+      // the body is turned, "left" in local bone space no longer matches
+      // "left" on screen and the head appears to track backwards.
+      var localYaw = curYaw - bodyYawCur;
+      localYaw = Math.max(-1.3, Math.min(1.3, localYaw));
+
+      neckBone.rotation.y = restNeck.y + localYaw * (1 - TUNE.headExtraYaw);
       neckBone.rotation.x = restNeck.x - curPitch * (1 - TUNE.headExtraPitch);
 
-      headBone.rotation.y = restHead.y + curYaw * TUNE.headExtraYaw;
+      headBone.rotation.y = restHead.y + localYaw * TUNE.headExtraYaw;
       headBone.rotation.x = restHead.x - curPitch * TUNE.headExtraPitch;
 
       if (!reduceMotion) {

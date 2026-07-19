@@ -1,4 +1,73 @@
 /* ============================================================
+   PAGE LOADER — real progress, not a fake timer.
+   Tracks every eager-loaded <img> on the page (background scenes,
+   school illustrations) plus web font loading, and only hides once
+   they've actually finished downloading — so on a slow connection it
+   genuinely stays up longer, and on a fast one it clears almost
+   instantly. Lazy-loaded logos further down the page are excluded on
+   purpose (they load as the user scrolls, not up front). A safety
+   timeout guarantees it never traps a visitor if one asset stalls.
+============================================================ */
+(function () {
+  var loader = document.getElementById("pageLoader");
+  if (!loader) return;
+  var fill = document.getElementById("plFill");
+  var pctEl = document.getElementById("plPct");
+
+  var imgs = Array.prototype.slice.call(document.images).filter(function (img) {
+    return img.getAttribute("loading") !== "lazy";
+  });
+
+  var total = imgs.length + 1; // +1 slot reserved for web fonts
+  var done = 0;
+  var startedAt = (window.performance && performance.now) ? performance.now() : Date.now();
+  var MIN_VISIBLE_MS = 550; // avoid an ugly instant flash on fast connections
+  var MAX_WAIT_MS = 8000;   // never block a visitor on a stuck/broken asset
+  var finished = false;
+
+  function update() {
+    var pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 100;
+    if (fill) fill.style.width = pct + "%";
+    if (pctEl) pctEl.textContent = pct + "%";
+  }
+
+  function markDone() {
+    done++;
+    update();
+    if (done >= total) finishLoading();
+  }
+
+  function finishLoading() {
+    if (finished) return;
+    finished = true;
+    var now = (window.performance && performance.now) ? performance.now() : Date.now();
+    var wait = Math.max(0, MIN_VISIBLE_MS - (now - startedAt));
+    setTimeout(function () {
+      loader.classList.add("pl-hide");
+      setTimeout(function () { if (loader.parentNode) loader.parentNode.removeChild(loader); }, 650);
+    }, wait);
+  }
+
+  imgs.forEach(function (img) {
+    if (img.complete) {
+      markDone();
+    } else {
+      img.addEventListener("load", markDone, { once: true });
+      img.addEventListener("error", markDone, { once: true });
+    }
+  });
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(markDone, markDone);
+  } else {
+    markDone();
+  }
+
+  setTimeout(finishLoading, MAX_WAIT_MS);
+  update();
+})();
+
+/* ============================================================
    My Journey — TomTom — combined app.js
    Everything the site needs lives here now (background story-scroll,
    embedded zebra model data, zebra mascot, sparkle cursor trail, journey

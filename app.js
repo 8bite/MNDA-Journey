@@ -1604,6 +1604,32 @@ document.addEventListener("input", function (e) {
   }
 });
 
+/* ---- klik pertama kali di sebuah field = auto-select teks contohnya ----
+   Tanpa ini, teks contoh ("Tulis keahlianmu di sini...", "@akunmu", dst)
+   bukan placeholder HTML asli — dia teks sungguhan. Jadi kalau langsung
+   ketik, huruf barumu cuma nyelip di tengah kalimat contoh, bukan
+   menggantikannya. Begitu field difokus DAN belum pernah disimpan
+   sendiri oleh pemilik (belum ada key di localStorage), seluruh isinya
+   di-select otomatis — ketikan pertama langsung menimpa semuanya bersih.
+   Kalau sudah pernah diisi sendiri, dibiarkan seperti biasa (supaya bisa
+   diedit sebagian tanpa kehapus semua). */
+document.addEventListener("focusin", function (e) {
+  var el = e.target;
+  if (!el || !el.hasAttribute || !el.hasAttribute("data-key")) return;
+  if (el.getAttribute("contenteditable") !== "true") return;
+  var key = el.getAttribute("data-key");
+  var saved;
+  try { saved = localStorage.getItem(PREFIX + "text_" + key); } catch (err) { saved = null; }
+  if (saved !== null && saved !== "") return; // sudah pernah diisi sendiri, jangan ganggu
+  try {
+    var range = document.createRange();
+    range.selectNodeContents(el);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } catch (err2) {}
+});
+
 if (editBtn) {
   editBtn.addEventListener("click", function () {
     var willBeOn = !document.body.classList.contains("edit-mode");

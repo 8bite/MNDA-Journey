@@ -342,7 +342,6 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
     grazeCycleSeconds: 6.5,
     dragRotateSensitivity: 0.012, // rad of body spin per px of horizontal drag
     bodyRotateSmoothing: 0.18,    // easing toward the dragged target angle
-    maxBodyYaw: 0.95,             // clamp: body can't be dragged past ~54 deg either way
     platformRadiusPad: 1.28       // how much wider the base disc is than the model's footprint
   };
 
@@ -448,8 +447,7 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
   window.addEventListener("pointermove", function (e) {
     if (!dragging) return;
     var dx = e.clientX - dragStartX;
-    var raw = dragStartYaw + dx * TUNE.dragRotateSensitivity;
-    bodyYawTarget = Math.max(-TUNE.maxBodyYaw, Math.min(TUNE.maxBodyYaw, raw));
+    bodyYawTarget = dragStartYaw + dx * TUNE.dragRotateSensitivity;
   });
   window.addEventListener("pointerup", function () {
     if (!dragging) return;

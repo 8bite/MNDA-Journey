@@ -132,6 +132,7 @@
   });
   var segments = Math.max(1, layers.length - 1);
   var POP_POINT = 0.34; // fraction of a stretch the current scene recedes alone before the next pops in
+  var POP_SCALE = 1.18; // extra zoom on illustrated (non-flat) scenes so the actual artwork fills the viewport instead of the faded padding baked into each image's edges
 
   function setScrub(L, on) {
     if (L.scrubbing === on) return;
@@ -200,13 +201,13 @@
           // sky + school scenes: blur + fade only, never scaled/moved (hides the hard rectangular edge)
           setBase(L, Math.max(0, 1 - R * 0.85), 1, 0, Math.max(0.4, 1 - R * 0.4), Math.min(10, R * 10));
         } else {
-          setBase(L, Math.max(0.15, 1 - R * 0.55), Math.max(0.55, 1 - R * 0.45), -R * 130, Math.max(0.4, 1 - R * 0.45), 0);
+          setBase(L, Math.max(0.15, 1 - R * 0.55), Math.max(0.55, 1 - R * 0.45) * POP_SCALE, -R * 130, Math.max(0.4, 1 - R * 0.45), 0);
         }
       } else if (i === seg + 1) {
         // the next scene: hidden + waiting, then pops to fully sharp/opaque
         setScrub(L, false);
-        if (popped) setBase(L, 1, 1, 0, 1, 0);
-        else setBase(L, 0, 1.04, 18, 0.8, 0);
+        if (popped) setBase(L, 1, POP_SCALE, 0, 1, 0);
+        else setBase(L, 0, POP_SCALE + 0.04, 18, 0.8, 0);
       } else {
         // further ahead, not relevant yet
         setScrub(L, false);

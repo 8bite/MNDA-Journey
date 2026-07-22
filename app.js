@@ -773,13 +773,22 @@ function ownerLogin(email, password) {
   });
 }
 
+// Hanya email ini yang dianggap "owner" (dapat toolbar edit). Akun lain yang
+// berhasil login tetap bisa MELIHAT web (lolos authGate di bawah), tapi tidak
+// dapat class "is-owner", jadi tidak bisa edit apa-apa.
+var OWNER_EMAIL = "semplonggaming@gmail.com";
+
 if (window.firebase) {
   firebase.auth().onAuthStateChanged(function (user) {
     if (user) {
+      var isOwnerEmail = !!(user.email && user.email.toLowerCase() === OWNER_EMAIL.toLowerCase());
       user.getIdToken().then(function (token) {
-        OWNER_ID_TOKEN = token;
-        document.documentElement.classList.add("is-owner");
-        try { localStorage.setItem("myjourney_owner", "1"); } catch (e) {}
+        OWNER_ID_TOKEN = isOwnerEmail ? token : null;
+        document.documentElement.classList.toggle("is-owner", isOwnerEmail);
+        try {
+          if (isOwnerEmail) localStorage.setItem("myjourney_owner", "1");
+          else localStorage.removeItem("myjourney_owner");
+        } catch (e) {}
       });
     } else {
       OWNER_ID_TOKEN = null;
@@ -789,11 +798,84 @@ if (window.firebase) {
   });
   // refresh token tiap 50 menit biar nggak expired waktu lagi edit lama
   setInterval(function () {
-    if (firebase.auth().currentUser) {
-      firebase.auth().currentUser.getIdToken(true).then(function (t) { OWNER_ID_TOKEN = t; });
+    var cu = firebase.auth().currentUser;
+    if (cu && cu.email && cu.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+      cu.getIdToken(true).then(function (t) { OWNER_ID_TOKEN = t; });
     }
   }, 50 * 60 * 1000);
 }
+
+/* ============================================================
+   AUTH GATE — seluruh web WAJIB login (akun Firebase mana saja
+   yang sudah kamu buat di Firebase Console > Authentication > Users)
+   sebelum kontennya kelihatan. Overlay #authGate defaultnya SELALU
+   menutupi layar (lihat CSS) supaya tidak ada celah kelihatan sekilas
+   sebelum Firebase sempat mengecek status login. Begitu login sukses
+   (atau ternyata sesi lamanya masih tersimpan di browser), overlay
+   disembunyikan. Status "owner"/edit tetap diatur terpisah di atas —
+   login di sini cuma syarat untuk BISA MELIHAT halaman.
+============================================================ */
+(function authGateSetup() {
+  var overlay = document.getElementById("authGate");
+  if (!overlay) return;
+
+  if (!window.firebase) {
+    // Firebase SDK gagal termuat (offline dsb) — jangan sampai pengunjung
+    // terkunci selamanya di layar login yang tidak akan pernah bisa jalan.
+    overlay.classList.add("authgate-hide");
+    return;
+  }
+
+  var form = document.getElementById("authGateForm");
+  var emailInput = document.getElementById("authGateEmail");
+  var passInput = document.getElementById("authGatePass");
+  var errorEl = document.getElementById("authGateError");
+  var submitBtn = document.getElementById("authGateSubmit");
+
+  function showGate() {
+    overlay.classList.remove("authgate-hide");
+  }
+  function hideGate() {
+    overlay.classList.add("authgate-hide");
+  }
+
+  firebase.auth().onAuthStateChanged(function (user) {
+    if (user) hideGate();
+    else showGate();
+  });
+
+  function translateAuthError(err) {
+    switch (err && err.code) {
+      case "auth/invalid-email": return "Format email tidak valid.";
+      case "auth/user-disabled": return "Akun ini dinonaktifkan.";
+      case "auth/user-not-found":
+      case "auth/wrong-password":
+      case "auth/invalid-credential": return "Email atau password salah.";
+      case "auth/too-many-requests": return "Terlalu banyak percobaan gagal. Coba lagi beberapa saat lagi.";
+      case "auth/network-request-failed": return "Gagal terhubung ke server. Cek koneksi internet.";
+      default: return "Login gagal: " + (err && err.message ? err.message : "terjadi kesalahan.");
+    }
+  }
+
+  if (form) {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (errorEl) errorEl.textContent = "";
+      var email = (emailInput && emailInput.value || "").trim();
+      var pass = (passInput && passInput.value) || "";
+      if (!email || !pass) return;
+
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Masuk…"; }
+      firebase.auth().signInWithEmailAndPassword(email, pass)
+        .catch(function (err) {
+          if (errorEl) errorEl.textContent = translateAuthError(err);
+        })
+        .then(function () {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Masuk"; }
+        });
+    });
+  }
+})();
 
 (function cloudSyncSetup() {
   var PREFIX = "myjourney_";

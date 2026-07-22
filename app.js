@@ -364,7 +364,7 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
    Wrapped defensively: any failure logs a clear reason to the console instead
    of silently leaving an empty widget.
 ============================================================ */
-(function () {
+function initZebraMascot() {
   "use strict";
 
   function warn(msg, err) {
@@ -696,6 +696,28 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
   window.addEventListener("resize", function () {
     widget.style.display = window.innerWidth < 760 ? "none" : "block";
   });
+}
+
+/* ---- lazy-load three.js/GLTFLoader HANYA di layar besar, supaya HP tidak
+   perlu mengunduh library 3D (~600KB) yang toh tidak dipakai di sana. ---- */
+(function () {
+  if (window.innerWidth < 760) return;
+  function loadScript(src, onload) {
+    var s = document.createElement("script");
+    s.src = src;
+    s.onload = onload;
+    s.onerror = function () { console.warn("[zebra] gagal memuat " + src); };
+    document.body.appendChild(s);
+  }
+  function boot() {
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js", function () {
+      loadScript("https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js", function () {
+        if (typeof initZebraMascot === "function") initZebraMascot();
+      });
+    });
+  }
+  if (document.readyState === "complete") boot();
+  else window.addEventListener("load", boot);
 })();
 
 
@@ -715,6 +737,63 @@ window.ZEBRA_GLTF_JSON = "{\"asset\":{\"version\":\"2.0\",\"generator\":\"Blockb
 ============================================================ */
 var FIREBASE_URL = "https://mnda-journey-default-rtdb.asia-southeast1.firebasedatabase.app";
 var CLOUD_SYNC_READY = false; // jadi true setelah tarikan awal dari Firebase selesai (atau gagal)
+
+/* ============================================================
+   FIREBASE CONFIG + LOGIN OWNER
+   Isi firebaseConfig di bawah ini dengan punya kamu sendiri —
+   ambil dari Firebase Console > Project settings (ikon gerigi) >
+   scroll ke "Your apps" > pilih app web kamu > "SDK setup and
+   configuration" > pilih "Config". Copy-paste objectnya ke sini.
+   Ini BUKAN rahasia — apiKey Firebase memang boleh terlihat publik,
+   yang benar-benar menjaga keamanan adalah Rules + Auth di server.
+============================================================ */
+var firebaseConfig = {
+  apiKey: "AIzaSyDRJl23cOdgrfSDCdd9FGszafjZv-KhiiM",
+  authDomain: "mnda-journey.firebaseapp.com",
+  databaseURL: "https://mnda-journey-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mnda-journey",
+  storageBucket: "mnda-journey.firebasestorage.app",
+  messagingSenderId: "395915477230",
+  appId: "1:395915477230:web:37c77eb71ea0b064dcf3ff"
+};
+try {
+  if (window.firebase && !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+} catch (e) { /* config belum diisi — login owner nggak akan jalan sampai diisi */ }
+
+var OWNER_ID_TOKEN = null; // token login owner saat ini, dipakai di setiap request ke Firebase
+
+function withAuthParam(url) {
+  return OWNER_ID_TOKEN ? (url + (url.indexOf("?") === -1 ? "?" : "&") + "auth=" + OWNER_ID_TOKEN) : url;
+}
+
+function ownerLogin(email, password) {
+  if (!window.firebase) { alert("Firebase Auth belum termuat, cek koneksi internet."); return; }
+  firebase.auth().signInWithEmailAndPassword(email, password).catch(function (err) {
+    alert("Login gagal: " + err.message);
+  });
+}
+
+if (window.firebase) {
+  firebase.auth().onAuthStateChanged(function (user) {
+    if (user) {
+      user.getIdToken().then(function (token) {
+        OWNER_ID_TOKEN = token;
+        document.documentElement.classList.add("is-owner");
+        try { localStorage.setItem("myjourney_owner", "1"); } catch (e) {}
+      });
+    } else {
+      OWNER_ID_TOKEN = null;
+      document.documentElement.classList.remove("is-owner");
+      try { localStorage.removeItem("myjourney_owner"); } catch (e) {}
+    }
+  });
+  // refresh token tiap 50 menit biar nggak expired waktu lagi edit lama
+  setInterval(function () {
+    if (firebase.auth().currentUser) {
+      firebase.auth().currentUser.getIdToken(true).then(function (t) { OWNER_ID_TOKEN = t; });
+    }
+  }, 50 * 60 * 1000);
+}
 
 (function cloudSyncSetup() {
   var PREFIX = "myjourney_";
@@ -762,7 +841,7 @@ var CLOUD_SYNC_READY = false; // jadi true setelah tarikan awal dari Firebase se
     if (isLocalOnly(key)) return;
     clearTimeout(pushTimers[key]);
     pushTimers[key] = setTimeout(function () {
-      var url = FIREBASE_URL + "/myjourney/" + cloudKeyFor(key) + ".json";
+      var url = withAuthParam(FIREBASE_URL + "/myjourney/" + cloudKeyFor(key) + ".json");
       var xhr2 = new XMLHttpRequest();
       xhr2.open("PUT", url, true);
       xhr2.setRequestHeader("Content-Type", "application/json");
@@ -771,7 +850,7 @@ var CLOUD_SYNC_READY = false; // jadi true setelah tarikan awal dari Firebase se
   }
   function pushDeleteToCloud(key) {
     if (isLocalOnly(key)) return;
-    var url = FIREBASE_URL + "/myjourney/" + cloudKeyFor(key) + ".json";
+    var url = withAuthParam(FIREBASE_URL + "/myjourney/" + cloudKeyFor(key) + ".json");
     var xhr3 = new XMLHttpRequest();
     xhr3.open("DELETE", url, true);
     try { xhr3.send(null); } catch (e) {}
@@ -807,17 +886,18 @@ var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-moti
    To lock it again on a device, clear the site's browser data,
    or open the URL with a wrong/no ?edit= value in a private window.
 ============================================================ */
-var SECRET_KEY = "MNDAJOURNEY"; // <-- GANTI dengan kata rahasiamu sendiri
+var SECRET_KEY = "MNDAJOURNEY"; // <-- boleh tetap dipakai sebagai "jalan pintas" ke form login
 (function ownerCheck() {
   var params = new URLSearchParams(window.location.search);
   var attempt = params.get("edit");
-  if (attempt && attempt === SECRET_KEY) {
-    try { localStorage.setItem(PREFIX + "owner", "1"); } catch (e) {}
-  }
-  var isOwner = false;
-  try { isOwner = localStorage.getItem(PREFIX + "owner") === "1"; } catch (e) {}
-  if (isOwner) {
-    document.documentElement.classList.add("is-owner");
+  // status is-owner sekarang murni ditentukan oleh onAuthStateChanged di atas
+  // (login Firebase sungguhan), bukan lagi cuma nulis ke localStorage.
+  if (attempt && attempt === SECRET_KEY && window.firebase && !firebase.auth().currentUser) {
+    var email = prompt("Login owner — masukkan email akun Firebase kamu:");
+    if (email) {
+      var pass = prompt("Masukkan password:");
+      if (pass) ownerLogin(email, pass);
+    }
   }
 })();
 
@@ -859,7 +939,8 @@ function resizeCanvas() {
 
 function buildStars() {
   var count = Math.floor((W * H) / 9000);
-  count = Math.max(40, Math.min(count, 160));
+  var cap = window.innerWidth < 700 ? 90 : 160; // lebih sedikit bintang di HP — animasi tetap mulus
+  count = Math.max(30, Math.min(count, cap));
   stars = [];
   for (var i = 0; i < count; i++) {
     stars.push({
@@ -1117,14 +1198,21 @@ function buildBubbles() {
   if (!bubbleField) return;
   bubbleField.innerHTML = "";
   var n = 14;
+  // dulu titik tengah gelembung selalu dihitung x=30 (pas untuk kotak 80px
+  // yang dipusatkan di desktop) — di HP kotaknya cuma 14px lebar dan digeser
+  // ke kiri, jadi gelembungnya perlu ngikutin lebar sebenarnya biar nggak
+  // tumpah ke area teks.
+  var fieldW = bubbleField.offsetWidth || 80;
+  var midX = fieldW / 2;
+  var jitter = Math.max(4, Math.min(20, fieldW / 2 - 3));
   for (var i = 0; i < n; i++) {
     var b = document.createElement("div");
     b.className = "bubble";
     var size = Math.random() * 8 + 4;
     b.style.width = size + "px";
     b.style.height = size + "px";
-    b.style.left = (30 + (Math.random() * 40 - 20)) + "px";
-    b.style.setProperty("--drift", (Math.random() * 30 - 15) + "px");
+    b.style.left = (midX + (Math.random() * jitter * 2 - jitter)) + "px";
+    b.style.setProperty("--drift", (Math.random() * (jitter * 1.5) - jitter * 0.75) + "px");
     var dur = Math.random() * 10 + 10;
     b.style.animationDuration = dur + "s";
     b.style.animationDelay = (-Math.random() * dur) + "s";
@@ -1149,9 +1237,18 @@ function updateTrackProgress() {
     } else {
       trackComet.classList.add("is-active");
       var pt = fillPath.getPointAtLength(len * progress);
-      /* viewBox is 60 units wide mapped 1:1 to the 60px-wide svgWrap, centered
-         at 50% of the track — so viewBox-x 30 sits on the container's center line. */
-      trackComet.style.left = "calc(50% + " + (pt.x - 30).toFixed(1) + "px)";
+      /* Dulu posisi komet dihitung pakai asumsi tetap "garis selalu di
+         tengah container" (calc(50% + ...)). Itu cocok di desktop, tapi di
+         HP CSS memindahkan garisnya ke pinggir kiri (left:0) — komet jadi
+         nyasar ke tengah layar padahal garisnya sudah di kiri. Supaya
+         selalu ikut ke mana pun garis itu diposisikan (sekarang atau nanti
+         kalau breakpoint-nya diubah lagi), hitung posisi komet dari ukuran
+         & posisi svgWrap yang SEBENARNYA dirender saat itu juga. */
+      var wrapRect = svgWrap.getBoundingClientRect();
+      var trackRect = trackWrap.getBoundingClientRect();
+      var scaleX = wrapRect.width / 60; // viewBox lebar 60 unit, dipetakan ke lebar svgWrap yang aktual (60px di desktop, 14px di HP)
+      var cometLeftPx = (wrapRect.left - trackRect.left) + pt.x * scaleX;
+      trackComet.style.left = cometLeftPx.toFixed(1) + "px";
       trackComet.style.top = pt.y.toFixed(1) + "px";
     }
   }
@@ -2234,7 +2331,15 @@ function showToast(msg) {
     if (cls) e.className = cls;
     return e;
   }
-  function scaleCount(n) { return isMobile ? Math.max(1, Math.round(n * 0.55)) : n; }
+  // di HP, kurangi jauh lebih banyak lagi (bukan cuma sedikit) supaya scroll
+  // tetap mulus di perangkat yang lebih lemah — makhluk terbang/daun jatuh
+  // tetap ada tapi jumlahnya jauh lebih sedikit.
+  function scaleCount(n) { return isMobile ? Math.max(1, Math.round(n * 0.35)) : n; }
+  // lapisan partikel & lens-flare (mix-blend-mode:screen, di-animasikan terus
+  // menerus) paling berat buat di-render tapi paling kecil dampak visualnya
+  // di layar kecil — di HP lapisan ini dilewati sepenuhnya.
+  function maybeParticles(c, cls) { if (isMobile) return; addImage(c, "particles.png", cls); }
+  function maybeFlares(c, positions) { if (isMobile) return; spawnFlares(c, positions); }
 
   /* ---- flying creatures: birds & butterflies ---- */
   function spawnFlyer(container, kind, count, opts) {
@@ -2339,12 +2444,12 @@ function showToast(msg) {
         addImage(c, "clouds.png", "fx-cloud fx-cloud-a");
         addImage(c, "clouds-extra.png", "fx-cloud fx-cloud-b");
         spawnFlyer(c, "bird", 4, { topMin: 6, topMax: 34, durMin: 18, durMax: 28 });
-        spawnFlares(c, [{ top: "8%", right: "14%" }, { top: "20%", right: "30%" }]);
+        maybeFlares(c, [{ top: "8%", right: "14%" }, { top: "20%", right: "30%" }]);
     }},
     { id: "pxMountainsFx", build: function (c) {
         addImage(c, "clouds-extra.png", "fx-cloud fx-cloud-slow");
         spawnFlyer(c, "bird", 3, { topMin: 16, topMax: 46, durMin: 18, durMax: 27 });
-        spawnFlares(c, [{ top: "12%", left: "18%" }]);
+        maybeFlares(c, [{ top: "12%", left: "18%" }]);
     }},
     { id: "pxForestFx", build: function (c) {
         /* this is the scene behind the "Menuju Muara — UGM" chapter —
@@ -2352,37 +2457,37 @@ function showToast(msg) {
         spawnFlyer(c, "bird", 5, { topMin: 4, topMax: 32, durMin: 15, durMax: 23 });
         spawnFlyer(c, "butterfly", 7, { topMin: 32, topMax: 74, durMin: 11, durMax: 18, scaleMin: 0.4, scaleMax: 0.75 });
         spawnFaller(c, "leaf", 9, { durMin: 9, durMax: 16 });
-        addImage(c, "particles.png", "fx-particles");
-        spawnFlares(c, [{ top: "9%", left: "10%" }, { top: "6%", right: "13%" }]);
+        maybeParticles(c, "fx-particles");
+        maybeFlares(c, [{ top: "9%", left: "10%" }, { top: "6%", right: "13%" }]);
         addFlag(c);
     }},
     { id: "pxHouseFx", build: function (c) {
         spawnFlyer(c, "butterfly", 6, { topMin: 36, topMax: 78, durMin: 10, durMax: 17 });
         spawnFaller(c, "petal", 9, { durMin: 11, durMax: 18 });
-        addImage(c, "particles.png", "fx-particles fx-particles-dim");
+        maybeParticles(c, "fx-particles fx-particles-dim");
     }},
     { id: "pxTKFx", build: function (c) {
         spawnFlyer(c, "butterfly", 5, { topMin: 18, topMax: 55, durMin: 9, durMax: 15, scaleMin: 0.35, scaleMax: 0.6 });
-        addImage(c, "particles.png", "fx-particles fx-particles-dim");
+        maybeParticles(c, "fx-particles fx-particles-dim");
     }},
     { id: "pxSDFx", build: function (c) {
         spawnFaller(c, "leaf", 7, { durMin: 8, durMax: 14, scaleMin: 0.3, scaleMax: 0.55 });
-        addImage(c, "particles.png", "fx-particles fx-particles-dim");
+        maybeParticles(c, "fx-particles fx-particles-dim");
     }},
     { id: "pxSMPFx", build: function (c) {
         spawnFaller(c, "petal", 7, { durMin: 9, durMax: 15, scaleMin: 0.3, scaleMax: 0.55 });
     }},
     { id: "pxSMAFx", build: function (c) {
         spawnFlyer(c, "bird", 3, { topMin: 8, topMax: 36, durMin: 14, durMax: 21, scaleMin: 0.3, scaleMax: 0.5 });
-        spawnFlares(c, [{ top: "8%", right: "16%" }]);
-        addImage(c, "particles.png", "fx-particles fx-particles-dim");
+        maybeFlares(c, [{ top: "8%", right: "16%" }]);
+        maybeParticles(c, "fx-particles fx-particles-dim");
     }},
     { id: "pxForegroundFx", build: function (c) {
         addImage(c, "grass.png", "fx-grass fx-grass-a");
         addImage(c, "grass-extra.png", "fx-grass fx-grass-b");
         spawnFlyer(c, "bird", 2, { topMin: 4, topMax: 22, durMin: 17, durMax: 24, scaleMin: 0.4, scaleMax: 0.6 });
         spawnFaller(c, "leaf", 5, { durMin: 10, durMax: 17 });
-        addImage(c, "particles.png", "fx-particles fx-particles-dim");
+        maybeParticles(c, "fx-particles fx-particles-dim");
     }}
   ];
 
